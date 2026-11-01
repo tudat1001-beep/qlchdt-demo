@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { sumSignedVnd } from '../../../shared/money';
 import { api } from '../../lib/api-client';
 import { formatVND, formatDateTime } from '../../lib/formatters';
 import { exportCashbookToExcel } from '../../lib/export-excel';
@@ -46,7 +47,7 @@ export const CashbookPage: React.FC = () => {
   const items = data?.items || [];
   const cashBalance = data?.cash_balance ?? 0;
   const bankBalance = data?.bank_balance ?? 0;
-  const totalBalance = cashBalance + bankBalance;
+  const totalBalance = sumSignedVnd([cashBalance, bankBalance]);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {

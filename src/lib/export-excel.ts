@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { sumSignedVnd } from '../../shared/money';
 import type { CashResponse, ReportsResponse } from '../types/cash-reports';
 import { formatDateTime } from './formatters';
 
@@ -14,7 +15,7 @@ function triggerDownload(workbook: XLSX.WorkBook, filename: string) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -40,7 +41,7 @@ export function exportCashbookToExcel(data: CashResponse, filterNote?: string): 
     ['Thời điểm xuất:', formatDateTime(new Date().toISOString())],
     ['Số dư tiền mặt (VND):', data.cash_balance],
     ['Số dư tài khoản ngân hàng (VND):', data.bank_balance],
-    ['Tổng tồn quỹ (VND):', data.cash_balance + data.bank_balance],
+    ['Tổng tồn quỹ (VND):', sumSignedVnd([data.cash_balance, data.bank_balance])],
   ];
 
   if (filterNote) {

@@ -40,6 +40,7 @@ test.describe('A-03b: Real API Cashbook, Reports, XLSX Exports & PWA Verificatio
         consoleErrors.push(msg.text());
       }
     });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
 
     // =========================================================================
     // 1. Kiểm tra Installable PWA Manifest & Icons

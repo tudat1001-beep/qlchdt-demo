@@ -12,11 +12,12 @@
 | T-03a | TERRA | T-02 | Trả/hủy bán hàng; FIFO, công nợ, hoàn tồn, audit/idempotency; hoàn thành `28f3d30`, SOL đã kiểm tra migration và tests |
 | A-02 | ANTIGRAVITY | T-02 API | Nhập hàng, POS, hóa đơn, thu nợ; hoàn thành `e5a37ac` + `c2234bc`, SOL đã kiểm tra 28 E2E |
 | A-02-QA1 | ANTIGRAVITY | A-02 | Sửa trạng thái drawer/table responsive; hoàn thành `3f06482`, SOL đã kiểm tra lại 28 E2E và ảnh mobile |
-| T-03b | TERRA | T-03a | Hoàn nhập NCC và bảo hành; đang triển khai, chưa nghiệm thu |
-| T-04 | TERRA | T-03b | Sổ quỹ, báo cáo doanh thu/giá vốn/lãi, tồn kho và công nợ; test số liệu tổng hợp |
-| A-03a | ANTIGRAVITY | T-03b API | UI trả/hủy, bảo hành, hoàn nhập NCC và sổ quỹ; API thật + E2E |
-| A-03b | ANTIGRAVITY | T-04 API | Dashboard/báo cáo, XLSX, hoàn tất in và PWA; E2E desktop/tablet/mobile |
-| SOL-R3 | SOL | T-03b,T-04,A-03a,A-03b | Review/merge; QA toàn app, docs vận hành, build/tests và mở app thật |
+| T-03b | TERRA | T-03a | Hoàn nhập NCC và bảo hành API; hoàn thành `4b6e4de`, merge `3cbd6d5` |
+| T-04 | TERRA | T-03b | Sổ quỹ, báo cáo tài chính, tồn kho, công nợ API; hoàn thành `66147e2`, merge `b022fa7` |
+| T-05 | SOL | T-04 | E2E login rate limit riêng trong guarded test server; hoàn thành `d71348e`, merge `05e2994`; mặc định vẫn 5 lần/15 phút |
+| A-03a | ANTIGRAVITY | T-03b API | UI trả/hủy, bảo hành, hoàn nhập NCC; hoàn thành `a24f9e6` + `ef3b4e9`, merge `5ba3814`; responsive E2E đã kiểm tra |
+| A-03b | ANTIGRAVITY | T-04 API | Sổ quỹ/báo cáo, XLSX, PWA online-first; hoàn thành `86ce76b` + `e5339a5`, merge `bd0caaa`; desktop/tablet/mobile E2E |
+| SOL-R3 | SOL | T-03b,T-04,A-03a,A-03b | Đang hoàn tất review, test tích hợp và tài liệu vận hành; không deploy production |
 
 Mỗi task có commit riêng. SOL xem diff trước merge, kiểm tra file boundary và test sau tích hợp. Tài liệu và task log ghi đúng thực tế, không tuyên bố pass khi chưa chạy. Không deploy production.
 

@@ -25,9 +25,11 @@ Task dependencies và tiêu chí chi tiết: IMPLEMENTATION_PLAN.md. Runtime IDs
 - A-02 `task_6000bc32d973`: commits `e5a37ac`, `c2234bc`, merge `c1166d8`; nhập hàng, kho, POS, hóa đơn, thu nợ. SOL độc lập chạy build + 66 tests và 28 E2E trên DB test đạt.
 - A-02-QA1 `task_1531bc433ba2`: commit `3f06482`, merge `4bfcdbb`; sửa chụp ảnh mobile khi sidebar còn animation, thêm cuộn ngang cho ba bảng kho, E2E guard; SOL chạy lại build + 66 tests và 28 E2E đạt, kiểm tra ảnh mobile sau merge.
 - T-03a `task_10a888efbcac`: commit `28f3d30`, merge `226f8ff`; migration004, trả/hủy bán hàng. SOL áp dụng migration và chạy build + 64 tests đạt.
-- T-03b `task_4119abfa5439`: lần đầu `ctx_73423707f405` kết thúc chưa xong, worktree được giữ lại; retry `ctx_ad58a2f0cdf2` đang tiếp tục trên cùng worktree. Gate `gate_dbe60feed08e` đã resolve sau review T-03a.
-- T-04 `task_1edad18919fa`: sổ quỹ và báo cáo backend, phụ thuộc T-03b/T-03a; đang chờ.
-- A-03a `task_58183781f7ea`: UI trả/hủy, hoàn nhập NCC và bảo hành, phụ thuộc T-03b/A-02-QA1; đang chờ.
-- A-03b `task_714f00dea643`: UI quỹ/báo cáo, XLSX và PWA online-first, phụ thuộc T-04/A-03a; đang chờ.
-- Tiếp theo: SOL review/merge T-03b, rồi giao các task đã lên DAG theo dependency; kiểm thử lại đầy đủ trước khi gọi ứng dụng hoàn thiện.
+- T-03b `task_4119abfa5439`: API hoàn nhập NCC và bảo hành; hoàn thành commit `4b6e4de`, merge `3cbd6d5`.
+- T-04 `task_1edad18919fa`: API sổ quỹ và báo cáo; hoàn thành commit `66147e2`, merge `b022fa7`.
+- T-05 `task_923b4b2e5b13`: chỉ tăng login limit trong guarded E2E server; commit `d71348e`, merge `05e2994`. Mặc định giữ 5 lần/15 phút, kiểm tra hiện có vẫn chứng minh request thứ 6 nhận 429.
+- A-03a `task_58183781f7ea`: giao diện trả/hủy, hoàn nhập NCC và bảo hành; commits `a24f9e6`, `ef3b4e9`, merge `5ba3814`; full suite trước A-03b đã qua desktop/tablet/mobile.
+- A-03b `task_714f00dea643`: sổ quỹ, báo cáo, XLSX và PWA online-first; commits `86ce76b`, `e5339a5`, merge `bd0caaa`; QA ảnh và E2E riêng desktop/tablet/mobile.
+- SOL-R3 hiện tại: review phát hiện tổng số dư có thể âm nên không dùng `sumVnd` (chỉ nhận số không âm); SOL thêm `sumSignedVnd`, test âm và overflow. `npm run check`: build + 81/81 tests; `npm run test:e2e`: 34/34 pass desktop/tablet/mobile. Vite còn cảnh báo bundle JS 1.26 MB > 500 kB.
+- Tiếp theo: hoàn tất commit tài liệu/financial helper, mở app local để kiểm tra thao tác cuối; không deploy production.
 - `npm audit`: 0 vulnerabilities tại lần kiểm tra gần nhất. `scripts/check-local.mjs` xác nhận hai database tách biệt và runtime role qlchdt_app không superuser/createdb/createrole. Không có dữ liệu giả được seed vào DB dùng thường.

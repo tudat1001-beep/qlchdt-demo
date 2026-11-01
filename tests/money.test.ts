@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allocateDiscount, multiplyVnd, partialReturnVnd, sumVnd } from '../shared/money.js';
+import { allocateDiscount, multiplyVnd, partialReturnVnd, sumSignedVnd, sumVnd } from '../shared/money.js';
 
 describe('SOL financial invariants', () => {
   it('keeps every discount dong, handles zero-value lines and cannot make a line negative', () => {
@@ -40,5 +40,10 @@ describe('SOL financial invariants', () => {
     }
     expect(() => multiplyVnd(Number.MAX_SAFE_INTEGER, 2)).toThrow(RangeError);
     expect(() => sumVnd([Number.MAX_SAFE_INTEGER, 1])).toThrow(RangeError);
+  });
+
+  it('sums signed cash balances exactly and rejects unsafe totals', () => {
+    expect(sumSignedVnd([-422_800_000, 18_000_000])).toBe(-404_800_000);
+    expect(() => sumSignedVnd([Number.MAX_SAFE_INTEGER, 1])).toThrow(RangeError);
   });
 });

@@ -10,8 +10,20 @@ function number(value: bigint): number {
   return Number(value);
 }
 
+function signedNumber(value: bigint): number {
+  if (value < -maxVnd || value > maxVnd) throw new RangeError('Số dư vượt giới hạn cho phép.');
+  return Number(value);
+}
+
 export function sumVnd(values: readonly number[]): number {
   return number(values.reduce((sum, value) => sum + integer(value), 0n));
+}
+
+export function sumSignedVnd(values: readonly number[]): number {
+  return signedNumber(values.reduce((sum, value) => {
+    if (!Number.isSafeInteger(value)) throw new RangeError('Số dư phải là số nguyên an toàn.');
+    return sum + BigInt(value);
+  }, 0n));
 }
 
 export function multiplyVnd(amount: number, quantity: number): number {

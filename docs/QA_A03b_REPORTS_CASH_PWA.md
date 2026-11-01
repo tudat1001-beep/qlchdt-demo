@@ -17,7 +17,7 @@
     1. **Tiền mặt tại quỹ (`cash_balance`):** Dòng tiền mặt thực tế sau các nghiệp vụ thu/chi tiền mặt.
     2. **Tài khoản ngân hàng (`bank_balance`):** Dòng tiền chuyển khoản ngân hàng.
     3. **Tổng tồn quỹ thực tế:** Tổng giá trị tiền mặt và tiền gửi ngân hàng hiện có.
-  - Tuyệt đối không tự ý fallback hay cộng trừ số dư client-side.
+  - Hai số dư tài khoản lấy từ API; tổng quỹ dùng `sumSignedVnd` để cộng chính xác hai số dư VND có thể âm, kiểm tra giới hạn số nguyên an toàn và không dùng số thực hoặc fallback.
 - **Bảng kê giao dịch chuẩn MISA:**
   - Liệt kê đầy đủ mọi dòng tiền phát sinh từ bán hàng, trả hàng, nhập hàng, trả hàng NCC, thu nợ, chi nợ và chi phí/thu nhập thủ công.
   - Phân loại rõ ràng: Tiền vào / Thu (`in`, màu xanh lá `+... ₫`) và Tiền ra / Chi (`out`, màu cam/đỏ `-... ₫`).
@@ -90,17 +90,17 @@
 ## 2. Kết quả Kiểm thử Tự động & Bằng chứng Nghiệm thu
 
 ### 2.1 Backend & Unit Tests (`npm test` / Vitest)
-Toàn bộ 80 bài kiểm thử backend và unit tests chạy trên cơ sở dữ liệu `_test` độc lập đều vượt qua:
+Toàn bộ 81 bài kiểm thử backend và unit tests chạy trên cơ sở dữ liệu `_test` độc lập đều vượt qua:
 ```
  ✓ server/transactions.test.ts (45 tests) 5949ms
  ✓ server/foundation.test.ts (21 tests) 5714ms
  ✓ server/cash-reports.test.ts (4 tests) 1971ms
- ✓ tests/money.test.ts (3 tests) 95ms
+ ✓ tests/money.test.ts (4 tests) 95ms
  ✓ tests/ui/idempotency.test.ts (7 tests) 33ms
 
  Test Files  5 passed (5)
-      Tests  80 passed (80)
-   Duration  17.06s
+      Tests  81 passed (81)
+   Duration  15.91s
 ```
 
 ### 2.2 TypeScript & Production Build (`npm run check`)
@@ -110,16 +110,20 @@ Toàn bộ 80 bài kiểm thử backend và unit tests chạy trên cơ sở d�
 
 ✓ 1675 modules transformed.
 dist/index.html                     0.78 kB │ gzip:   0.45 kB
-dist/assets/index-Cz1sj8sL.css     17.83 kB │ gzip:   4.23 kB
-dist/assets/index-B8FAtDoK.js   1,349.55 kB │ gzip: 325.16 kB
-✓ built in 6.97s
+dist/assets/index-DZyV3xXb.css     18.32 kB │ gzip:   4.31 kB
+dist/assets/index-BphbfEO5.js   1,258.06 kB │ gzip: 320.56 kB
+✓ built in 5.51s
+
+Vite cảnh báo chunk JavaScript lớn hơn 500 kB sau minify; chưa có lỗi build.
 ```
 
 ### 2.3 E2E Integration Tests (`tests/e2e/reports-cash-pwa.spec.ts`)
 Kiểm thử toàn diện luồng nghiệp vụ trên cơ sở dữ liệu `_test` thật thông qua máy chủ `scripts/e2e-server.mjs`:
-1. **Desktop Chrome (1280x720):** **PASSED** (11.0s)
-2. **Tablet Chrome (768x1024):** **PASSED** (13.9s)
-3. **Mobile Chrome (Pixel 5 - 393x851):** **PASSED** (14.7s)
+1. **Desktop Chrome (1280x720):** **PASSED**
+2. **Tablet Chrome (768x1024):** **PASSED**
+3. **Mobile Chrome (Pixel 5 - 393x851):** **PASSED**
+
+Sau khi merge toàn bộ module, full suite đạt **34/34 E2E** trên ba cấu hình; `npm run check` đạt **81/81 tests**.
 
 Nội dung kiểm tra chi tiết trong spec:
 - Xác thực file `manifest.json` và tải về thành công các biểu tượng 192x192 và 512x512.
