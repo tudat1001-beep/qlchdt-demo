@@ -21,6 +21,7 @@ const origin='http://127.0.0.1:5174';
 const headers=(key:string=randomUUID()) => ({cookie,origin,'idempotency-key':key});
 const imei=() => (++imeiCounter).toString();
 const post=(url:string,payload:unknown,key?:string) => app.inject({method:'POST',url,headers:headers(key),payload:payload as object});
+const patch=(url:string,payload:unknown,key?:string) => app.inject({method:'PATCH',url,headers:headers(key),payload:payload as object});
 const get=(url:string) => app.inject({url,headers:{cookie}});
 async function product(kind:'PHONE'|'ACCESSORY'='ACCESSORY') {
   const response=await post('/api/products',{sku:randomUUID(),name:`Test ${kind}`,kind,sale_price:500});
@@ -46,7 +47,7 @@ async function receivePhone() {
 }
 async function ledgerCounts() {
   const result:Record<string,number>={};
-  for (const table of ['sales','sale_lines','sale_allocations','returns','return_lines','return_allocations','stock_movements','payments','cash_entries','audit_logs','idempotency'])
+  for (const table of ['sales','sale_lines','sale_allocations','returns','return_lines','return_allocations','purchases','purchase_returns','purchase_return_lines','purchase_return_devices','purchase_return_allocations','stock_movements','payments','cash_entries','warranties','audit_logs','idempotency'])
     result[table]=(await pool.query(`SELECT count(*) FROM ${table}`)).rows[0].count;
   return result;
 }
@@ -364,6 +365,10 @@ describe('debt collections',() => {
 
 const returnSale=(document:any,quantity:number,method:'cash'|'bank'='cash',key?:string,disposition:'available'|'quarantine'='available') =>
   post('/api/returns',{sale_id:document.id,reason:'Customer return',disposition,method,lines:[{sale_line_id:document.lines[0].id,quantity}]},key);
+const returnPurchase=(purchase_id:string,lines:unknown[],method:'cash'|'bank'='cash',key?:string) =>
+  post('/api/purchase-returns',{purchase_id,reason:'Supplier return',method,lines},key);
+const createWarranty=(device_id:string,customer_id?:string,issue='Device issue',key?:string) =>
+  post('/api/warranties',{device_id,...(customer_id?{customer_id}:{}),issue},key);
 
 describe('sale returns and cancellation',() => {
   it('conserves discounted dong and original cost for 1+1+1 returns versus one full return',async () => {
@@ -543,5 +548,135 @@ describe('sale returns and cancellation',() => {
     const allocation=(await pool.query('SELECT * FROM return_allocations LIMIT 1')).rows[0];
     await expect(pool.query(`INSERT INTO return_allocations(return_line_id,sale_line_id,sale_allocation_id,quantity,cost)
       VALUES ($1,$2,$3,2147483647,0)`,[allocation.return_line_id,allocation.sale_line_id,allocation.sale_allocation_id])).rejects.toMatchObject({code:'23514'});
+  });
+});
+
+describe('supplier returns and warranties',()=>{
+  it('returns only available original devices and preserves returned-supplier device history',async()=>{
+    const phone=await product('PHONE'); const firstImei=imei(),secondImei=imei();
+    const bought=(await purchase([{product_id:phone.id,quantity:2,unit_cost:25,devices:[{imei:firstImei,condition:'NEW'},{imei:secondImei,condition:'USED'}]}])).json();
+    const devices=bought.lines[0].devices;
+    const sold=await sale([{product_id:phone.id,device_id:devices[0].id,quantity:1,unit_price:50}],[{method:'cash',amount:50}],0,null);
+    expect(sold.statusCode).toBe(201);
+    expect((await returnPurchase(bought.id,[{purchase_line_id:bought.lines[0].id,quantity:1,device_ids:[devices[0].id]}])).statusCode).toBe(422);
+    const returned=await returnPurchase(bought.id,[{purchase_line_id:bought.lines[0].id,quantity:1,device_ids:[devices[1].id]}]);
+    expect(returned.statusCode,returned.body).toBe(201); expect(returned.json()).toMatchObject({total:25,refund:0,debt_reduction:25});
+    expect((await pool.query('SELECT status,cost FROM devices WHERE id=$1',[devices[1].id])).rows[0]).toEqual({status:'returned_supplier',cost:25});
+    expect((await returnPurchase(bought.id,[{purchase_line_id:bought.lines[0].id,quantity:1,device_ids:[devices[1].id]}])).statusCode).toBe(422);
+    expect((await returnPurchase(bought.id,[{purchase_line_id:bought.lines[0].id,quantity:1,device_ids:[devices[0].id]}])).statusCode).toBe(422);
+  });
+  it('reduces supplier debt before refunding only paid value and reports immutable original totals',async()=>{
+    const ownSupplier=(await post('/api/suppliers',{name:'Purchase return customer'})).json().id;
+    const item=await product();
+    const bought=await post('/api/purchases',{supplier_id:ownSupplier,extra_cost:0,lines:[{product_id:item.id,quantity:2,unit_cost:10}],payments:[{method:'cash',amount:5}]});
+    expect(bought.statusCode).toBe(201);
+    const first=await returnPurchase(bought.json().id,[{purchase_line_id:bought.json().lines[0].id,quantity:1}]);
+    expect(first.statusCode,first.body).toBe(201); expect(first.json()).toMatchObject({total:10,debt_reduction:10,refund:0});
+    expect((await post('/api/payments',{party_type:'supplier',reference_id:bought.json().id,method:'bank',amount:5})).statusCode).toBe(201);
+    const second=await returnPurchase(bought.json().id,[{purchase_line_id:bought.json().lines[0].id,quantity:1}],'bank');
+    expect(second.statusCode,second.body).toBe(201); expect(second.json()).toMatchObject({total:10,debt_reduction:0,refund:10});
+    const detail=(await get(`/api/purchases/${bought.json().id}`)).json();
+    expect(detail).toMatchObject({total:20,paid:10,returned_total:20,net_total:0,refunded:10,paid_net:0,debt:0});
+    const party=(await get(`/api/suppliers/${ownSupplier}`)).json();
+    expect(party.debt).toBe(0); expect(party.returns).toHaveLength(2); expect(party.purchases[0].total).toBe(20);
+    expect((await pool.query('SELECT direction,method,amount,category FROM cash_entries WHERE purchase_return_id=$1',[second.json().id])).rows).toEqual([{direction:'in',method:'bank',amount:10,category:'purchase_refund'}]);
+    expect((await post('/api/payments',{party_type:'supplier',reference_id:bought.json().id,method:'cash',amount:1})).statusCode).toBe(422);
+  });
+  it('returns accessory cost from original split lots after sale, return and resale',async()=>{
+    const item=await product();
+    const bought=(await purchase([{product_id:item.id,quantity:3,unit_cost:10}],2)).json();
+    expect(bought.lines[0].lots.map((lot:any)=>[lot.quantity,lot.unit_cost])).toEqual([[2,11],[1,10]]);
+    const sold=(await sale([{product_id:item.id,quantity:2,unit_price:30}],[{method:'cash',amount:60}],0,null)).json();
+    expect((await returnSale(sold,1)).statusCode).toBe(201);
+    const resold=await sale([{product_id:item.id,quantity:1,unit_price:30}],[{method:'bank',amount:30}],0,null);
+    expect(resold.statusCode,resold.body).toBe(201); expect(resold.json().cost).toBe(11);
+    const returned=await returnPurchase(bought.id,[{purchase_line_id:bought.lines[0].id,quantity:1}]);
+    expect(returned.statusCode,returned.body).toBe(201); expect(returned.json().total).toBe(10);
+    const detail=(await get(`/api/purchases/${bought.id}`)).json();
+    expect(detail).toMatchObject({total:32,returned_total:10,net_total:22});
+    expect(detail.returns[0].lines[0].allocations[0]).toMatchObject({lot_id:bought.lines[0].lots[1].id,quantity:1,unit_cost:10,cost:10});
+  });
+  it('serializes concurrent supplier returns and debt payments with correct net balance',async()=>{
+    const item=await receiveAccessory(2); const bought=(await purchase([{product_id:item.id,quantity:2,unit_cost:10}])).json();
+    const line=bought.lines[0];
+    const [returned,paid]=await Promise.all([returnPurchase(bought.id,[{purchase_line_id:line.id,quantity:1}]),
+      post('/api/payments',{party_type:'supplier',reference_id:bought.id,method:'cash',amount:20})]);
+    expect(returned.statusCode,returned.body).toBe(201); expect([201,422]).toContain(paid.statusCode);
+    const detail=(await get(`/api/purchases/${bought.id}`)).json();
+    expect(detail.net_total).toBe(10); expect(detail.paid_net+detail.debt).toBe(10);
+    expect(detail.debt).toBe(paid.statusCode===201?0:10);
+    expect(detail.refunded).toBe(paid.statusCode===201?10:0);
+    expect((await returnPurchase(bought.id,[{purchase_line_id:line.id,quantity:1}])).statusCode).toBe(201);
+    const over=(await post('/api/payments',{party_type:'supplier',reference_id:bought.id,method:'cash',amount:1})); expect(over.statusCode).toBe(422);
+  });
+  it('serializes competing supplier returns of the last original accessory unit',async()=>{
+    const item=await receiveAccessory(); const bought=(await purchase([{product_id:item.id,quantity:1,unit_cost:10}])).json();
+    const lines=[{purchase_line_id:bought.lines[0].id,quantity:1}];
+    const responses=await Promise.all([returnPurchase(bought.id,lines),returnPurchase(bought.id,lines,'bank')]);
+    expect(responses.map(response=>response.statusCode).sort()).toEqual([201,422]);
+    expect((await get(`/api/purchases/${bought.id}`)).json().returned_total).toBe(10);
+    expect((await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity).toBe(1);
+  });
+  it('replays same-key supplier returns and rolls every write back after a cash failure',async()=>{
+    const item=await receiveAccessory(2); const bought=(await purchase([{product_id:item.id,quantity:2,unit_cost:10}],0,[{method:'cash',amount:20}])).json();
+    const key=randomUUID(); const lines=[{purchase_line_id:bought.lines[0].id,quantity:1}];
+    const [first,replay]=await Promise.all([returnPurchase(bought.id,lines,'cash',key),returnPurchase(bought.id,lines,'cash',key)]);
+    expect(first.statusCode,first.body).toBe(201); expect(replay.json()).toEqual(first.json());
+    expect((await returnPurchase(bought.id,lines,'bank',key)).statusCode).toBe(409);
+    const other=(await purchase([{product_id:item.id,quantity:1,unit_cost:10}],0,[{method:'cash',amount:10}])).json(); const failureKey=randomUUID();
+    const before=await ledgerCounts();
+    const stockBefore=(await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity;
+    await pool.query(`CREATE OR REPLACE FUNCTION fail_supplier_refund_test() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced supplier refund failure'; END $$`);
+    await pool.query('CREATE TRIGGER fail_supplier_refund BEFORE INSERT ON cash_entries FOR EACH ROW WHEN (NEW.purchase_return_id IS NOT NULL) EXECUTE FUNCTION fail_supplier_refund_test()');
+    try {
+      expect((await returnPurchase(other.id,[{purchase_line_id:other.lines[0].id,quantity:1}],'cash',failureKey)).statusCode).toBe(500);
+      expect(await ledgerCounts()).toEqual(before);
+      expect((await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity).toBe(stockBefore);
+    } finally { await pool.query('DROP TRIGGER fail_supplier_refund ON cash_entries'); }
+    expect((await returnPurchase(other.id,[{purchase_line_id:other.lines[0].id,quantity:1}],'cash',failureKey)).statusCode).toBe(201);
+  });
+  it('quarantines shop warranty stock, requires legal transitions and audits explicit release',async()=>{
+    const own=await receivePhone(); const customer=(await post('/api/customers',{name:'Warranty owner'})).json().id;
+    const received=await createWarranty(own.device.id,customer); expect(received.statusCode,received.body).toBe(201);
+    expect((await pool.query('SELECT status FROM devices WHERE id=$1',[own.device.id])).rows[0].status).toBe('quarantine');
+    expect((await sale([{product_id:own.id,device_id:own.device.id,quantity:1,unit_price:100}])).statusCode).toBe(409);
+    expect((await createWarranty(own.device.id)).statusCode).toBe(409);
+    expect((await patch(`/api/warranties/${received.json().id}`,{status:'completed',release_to_stock:true})).statusCode).toBe(422);
+    const processing=await patch(`/api/warranties/${received.json().id}`,{status:'processing'}); expect(processing.statusCode).toBe(200);
+    const completed=await patch(`/api/warranties/${received.json().id}`,{status:'completed',resolution:'Repaired',release_to_stock:true});
+    expect(completed.statusCode,completed.body).toBe(200); expect(completed.json()).toMatchObject({status:'completed',resolution:'Repaired'});
+    expect((await pool.query('SELECT status FROM devices WHERE id=$1',[own.device.id])).rows[0].status).toBe('available');
+    expect((await pool.query("SELECT count(*) FROM audit_logs WHERE entity_type='warranty' AND entity_id=$1",[received.json().id])).rows[0].count).toBe(3);
+    expect((await get('/api/warranties?q=Warranty')).json().items[0]).toMatchObject({id:received.json().id,customer_id:customer,customer_name:'Warranty owner'});
+  });
+  it('keeps sold customer phones sold and rejects wrong owner or stock release',async()=>{
+    const own=await receivePhone(); const first=(await post('/api/customers',{name:'Actual owner'})).json().id; const wrong=(await post('/api/customers',{name:'Different owner'})).json().id;
+    const sold=(await sale([{product_id:own.id,device_id:own.device.id,quantity:1,unit_price:100}],[],0,first)).json();
+    expect((await createWarranty(own.device.id,wrong)).statusCode).toBe(422);
+    const warranty=await createWarranty(own.device.id,first); expect(warranty.statusCode).toBe(201);
+    expect((await pool.query('SELECT status FROM devices WHERE id=$1',[own.device.id])).rows[0].status).toBe('sold');
+    await patch(`/api/warranties/${warranty.json().id}`,{status:'processing'});
+    expect((await returnSale(sold,1,'cash',undefined,'available')).statusCode).toBe(422);
+    expect((await patch(`/api/warranties/${warranty.json().id}`,{status:'completed',release_to_stock:true})).statusCode).toBe(422);
+    expect((await pool.query('SELECT status FROM devices WHERE id=$1',[own.device.id])).rows[0].status).toBe('sold');
+    expect((await get(`/api/sales/${sold.id}`)).json().status).toBe('posted');
+  });
+  it('serializes warranty intake against sale with product-before-device locks',async()=>{
+    const own=await receivePhone();
+    const [warranty,sold]=await Promise.all([createWarranty(own.device.id),sale([{product_id:own.id,device_id:own.device.id,quantity:1,unit_price:100}])]);
+    expect(warranty.statusCode,warranty.body).toBe(201);
+    const status=(await pool.query('SELECT status FROM devices WHERE id=$1',[own.device.id])).rows[0].status;
+    if(sold.statusCode===201) expect(status).toBe('sold'); else { expect(sold.statusCode).toBe(409); expect(status).toBe('quarantine'); }
+  });
+  it('supports completed/cancelled warranty history while rejecting invalid states, IDs and missing idempotency',async()=>{
+    const own=await receivePhone(); const first=await createWarranty(own.device.id,undefined,'Warranty test',randomUUID());
+    expect(first.statusCode).toBe(201);
+    const conflict=await createWarranty(own.device.id); expect(conflict.statusCode).toBe(409);
+    expect((await patch(`/api/warranties/${first.json().id}`,{status:'cancelled'})).statusCode).toBe(422);
+    expect((await patch(`/api/warranties/${first.json().id}`,{status:'processing'})).statusCode).toBe(200);
+    expect((await patch(`/api/warranties/${first.json().id}`,{status:'cancelled'})).statusCode).toBe(200);
+    const second=await createWarranty(own.device.id); expect(second.statusCode).toBe(201);
+    expect((await app.inject({method:'POST',url:'/api/warranties',headers:{cookie,origin},payload:{device_id:own.device.id,issue:'Missing key'}})).statusCode).toBe(400);
+    expect((await post('/api/warranties',{device_id:randomUUID(),issue:'Missing device'})).statusCode).toBe(404);
   });
 });

@@ -40,6 +40,9 @@ export function registerReturns(app:FastifyInstance,pool:Database) {
         });
         const devices=new Map((await client.query<Device>('SELECT * FROM devices WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',
           [selected.flatMap(item => item.line.device_id?[item.line.device_id]:[])])).rows.map(device => [device.id,device]));
+        if ((await client.query("SELECT id FROM warranties WHERE device_id=ANY($1::uuid[]) AND status IN ('received','processing')",
+          [selected.flatMap(item=>item.line.device_id?[item.line.device_id]:[])])).rowCount)
+          throw new ApiError(422,'ACTIVE_WARRANTY','Không thể trả thiết bị khi hồ sơ bảo hành còn hoạt động');
         const allocations=(await client.query<Allocation>(`SELECT a.*,(SELECT coalesce(sum(quantity),0)::bigint FROM return_allocations WHERE sale_allocation_id=a.id) AS returned_quantity
           FROM sale_allocations a JOIN sale_lines l ON l.id=a.sale_line_id WHERE l.sale_id=$1 ORDER BY l.position,a.position`,[saleId])).rows;
         const lots=new Map((await client.query<Lot>('SELECT * FROM accessory_lots WHERE id=ANY($1::uuid[]) ORDER BY created_at,id FOR UPDATE',

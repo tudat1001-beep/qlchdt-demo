@@ -3,8 +3,12 @@ import type { Database } from './db.js';
 import { ApiError } from './errors.js';
 
 export type Reader = Pick<Database,'query'> | Pick<PoolClient,'query'>;
-export const purchaseSelect = `SELECT p.*,coalesce((SELECT sum(amount) FROM payments WHERE purchase_id=p.id),0)::money_vnd AS paid,
-  (p.total-coalesce((SELECT sum(amount) FROM payments WHERE purchase_id=p.id),0))::money_vnd AS debt FROM purchases p`;
+export const purchaseSelect = `SELECT p.*,x.paid::money_vnd AS paid,r.total::money_vnd AS returned_total,
+  r.refund::money_vnd AS refunded,(p.total-r.total)::money_vnd AS net_total,(x.paid-r.refund)::money_vnd AS paid_net,
+  (p.total-x.paid-r.reduction)::money_vnd AS debt FROM purchases p
+  CROSS JOIN LATERAL (SELECT coalesce(sum(amount),0) AS paid FROM payments WHERE purchase_id=p.id) x
+  CROSS JOIN LATERAL (SELECT coalesce(sum(total),0) AS total,coalesce(sum(refund),0) AS refund,
+    coalesce(sum(debt_reduction),0) AS reduction FROM purchase_returns WHERE purchase_id=p.id) r`;
 export const paymentSelect = `SELECT p.*,coalesce(p.purchase_id,p.sale_id) AS reference_id,
   CASE WHEN p.purchase_id IS NOT NULL THEN 'supplier' ELSE 'customer' END AS party_type FROM payments p`;
 export const saleSelect = `SELECT s.id,s.number,s.customer_id,s.customer_name,s.customer_snapshot,s.subtotal,s.discount,
@@ -28,7 +32,13 @@ export async function purchaseDetail(db: Reader, id: string) {
   const devices = (await db.query('SELECT d.* FROM devices d JOIN purchase_lines l ON l.id=d.purchase_line_id WHERE l.purchase_id=$1 ORDER BY d.created_at,d.id',[id])).rows;
   const lots = (await db.query('SELECT a.* FROM accessory_lots a JOIN purchase_lines l ON l.id=a.purchase_line_id WHERE l.purchase_id=$1 ORDER BY a.created_at,a.id',[id])).rows;
   const payments = (await db.query(`${paymentSelect} WHERE p.purchase_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
-  return { ...document, lines:lines.map(line => ({ ...line, devices:devices.filter(device => device.purchase_line_id===line.id),lots:lots.filter(lot => lot.purchase_line_id===line.id) })),payments,returns:[] };
+  const returns=(await db.query('SELECT * FROM purchase_returns WHERE purchase_id=$1 ORDER BY created_at,id',[id])).rows;
+  const returnLines=(await db.query('SELECT * FROM purchase_return_lines WHERE purchase_id=$1 ORDER BY position,id',[id])).rows;
+  const returnDevices=(await db.query('SELECT * FROM purchase_return_devices WHERE purchase_line_id=ANY($1::uuid[])',[lines.map(line=>line.id)])).rows;
+  const returnAllocations=(await db.query('SELECT * FROM purchase_return_allocations WHERE purchase_line_id=ANY($1::uuid[])',[lines.map(line=>line.id)])).rows;
+  return { ...document, lines:lines.map(line => ({ ...line, devices:devices.filter(device => device.purchase_line_id===line.id),lots:lots.filter(lot => lot.purchase_line_id===line.id) })),payments,
+    returns:returns.map(doc=>({...doc,lines:returnLines.filter(line=>line.purchase_return_id===doc.id).map(line=>({...line,
+      devices:returnDevices.filter(device=>device.purchase_return_line_id===line.id),allocations:returnAllocations.filter(allocation=>allocation.purchase_return_line_id===line.id)}))})) };
 }
 
 export async function lockProducts(client: PoolClient, ids: string[]) {

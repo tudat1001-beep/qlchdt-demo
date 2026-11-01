@@ -31,7 +31,8 @@ export function registerParties(app: FastifyInstance, pool: Database) {
       }
       const purchases = (await pool.query(`${purchaseSelect} WHERE p.supplier_id=$1 ORDER BY p.created_at DESC,p.id`,[id])).rows;
       const payments = (await pool.query(`${paymentSelect} JOIN purchases d ON d.id=p.purchase_id WHERE d.supplier_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
-      return { ...row,purchases,payments };
+      const returns=(await pool.query('SELECT r.* FROM purchase_returns r JOIN purchases d ON d.id=r.purchase_id WHERE d.supplier_id=$1 ORDER BY r.created_at,r.id',[id])).rows;
+      return { ...row,purchases,payments,returns };
     });
     app.post(`/api/${table}`, async (request, reply) => {
       const input = partyFields.parse(request.body);
