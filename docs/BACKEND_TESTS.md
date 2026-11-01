@@ -25,3 +25,12 @@ Tests require `TEST_DATABASE_URL` naming a database ending `_test`. Both the URL
 ## Deliberate limits
 
 T-02/T-03 transaction modules, full-app UI/build/E2E and deployed HTTPS were not tested here. The production serving behavior is verified with a built-file fixture, not a frontend build. Rate limits are held in one server process; a multi-process deployment needs a shared limiter. Session/key history is not automatically pruned beyond expired-session cleanup during successful login. No user data, fake inventory or fake transactions were inserted into the real database.
+
+## T-02 inventory checkpoint
+
+- `node node_modules/typescript/bin/tsc -p server/tsconfig.json --noEmit` - exit 0.
+- `node node_modules/vitest/vitest.mjs run server/foundation.test.ts server/transactions.test.ts` - exit 0, **28/28 passed**, 2 files, 8.41 seconds at 10:05:15 Asia/Saigon on 2026-11-01.
+- Seven new PostgreSQL inventory tests verify repeated product cost lines, device metadata, exact 10-dong extra allocation across seven units, two-lot splitting, linked cash/bank payments and derived supplier debt/history, stock counts and reads, duplicate existing/global request IMEIs, malformed/kind/quantity/array limits, MAX_SAFE overflow and exact-boundary success, five simultaneous same-key purchases and payload conflict, forced cash-trigger failure after stock writes with complete rollback and clean retry, plus direct SQL source/ledger constraints.
+- Both suites own random schemas only after URL/current_database `_test` guards; cleanup drops only confirmed-owned schemas. Earlier T-01 one-migration assertions now cover both versions and checksum drift targets a single version.
+
+Sales/FIFO consumption and collections remain for the second T-02 commit; no reversals/warranty/report work is included in this checkpoint.

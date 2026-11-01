@@ -10,6 +10,7 @@ import { registerCatalog } from './catalog.js';
 import type { Database } from './db.js';
 import { ApiError } from './errors.js';
 import { registerParties } from './parties.js';
+import { registerInventory } from './inventory.js';
 
 export interface AppOptions { pool: Database; origin: string; secureCookies?: boolean; logger?: boolean; distPath?: string }
 
@@ -22,6 +23,8 @@ export async function buildApp({ pool, origin, secureCookies = false, logger = f
   app.setErrorHandler((error: Error & { code?: string; statusCode?: number }, request, reply) => {
     if (error instanceof ZodError) return reply.code(400).send({ error: { code: 'VALIDATION_ERROR', message: `Dữ liệu không hợp lệ: ${error.issues.map(issue => issue.path.join('.') || 'nội dung yêu cầu').join(', ')}` } });
     if (error instanceof ApiError) return reply.code(error.statusCode).send({ error: { code: error.code, message: error.message } });
+    if (error instanceof RangeError) return reply.code(422).send({ error:{code:'MONEY_RANGE',message:'Số tiền hoặc tổng tiền vượt giới hạn cho phép'} });
+    if (['40P01','55P03','57014'].includes(error.code??'')) return reply.header('Retry-After','1').code(409).send({error:{code:'TRANSACTION_RETRY',message:'Giao dịch đang bận; vui lòng thử lại với cùng khóa chống ghi trùng'}});
     if (error.code === '23505') return reply.code(409).send({ error: { code: 'DUPLICATE', message: 'Bản ghi đã tồn tại' } });
     if (['23514', '23503', '22003'].includes(error.code ?? '')) return reply.code(422).send({ error: { code: 'INVALID_TRANSITION', message: 'Thao tác không đáp ứng quy tắc dữ liệu' } });
     if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500)
@@ -39,6 +42,7 @@ export async function buildApp({ pool, origin, secureCookies = false, logger = f
   app.get('/api/health', async () => { await pool.query('SELECT 1'); return { ok: true }; });
   registerCatalog(app, pool);
   registerParties(app, pool);
+  registerInventory(app,pool);
   if (existsSync(`${distPath}/index.html`)) await app.register(staticFiles, {
     root: distPath, wildcard: false,
     setHeaders(reply, path) {

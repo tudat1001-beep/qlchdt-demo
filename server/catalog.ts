@@ -5,8 +5,9 @@ import type { Database } from './db.js';
 import { ApiError } from './errors.js';
 import { audit, idempotent } from './idempotency.js';
 
-// shortcut: accessory stock stays zero in T-01, replace with lot sums in T-02.
-const productSelect = `SELECT p.*,(SELECT count(*)::integer FROM devices d WHERE d.product_id=p.id AND d.status='available') AS stock_quantity FROM products p`;
+const productSelect = `SELECT p.*,(CASE WHEN p.kind='PHONE' THEN
+  (SELECT count(*) FROM devices d WHERE d.product_id=p.id AND d.status='available') ELSE
+  (SELECT coalesce(sum(remaining_quantity),0) FROM accessory_lots a WHERE a.product_id=p.id) END)::money_vnd AS stock_quantity FROM products p`;
 
 export function registerCatalog(app: FastifyInstance, pool: Database) {
   app.get('/api/products', async request => {

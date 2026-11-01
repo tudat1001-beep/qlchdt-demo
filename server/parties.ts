@@ -4,20 +4,29 @@ import { partyFields, partyPatch, searchQuery, uuid } from '../shared/validation
 import type { Database } from './db.js';
 import { ApiError } from './errors.js';
 import { audit, idempotent } from './idempotency.js';
+import { paymentSelect,purchaseSelect } from './documents.js';
+
+function partySelect(table:'customers'|'suppliers') {
+  return table==='suppliers'
+    ? `SELECT p.*,(SELECT coalesce(sum(d.debt),0)::money_vnd FROM (${purchaseSelect}) d WHERE d.supplier_id=p.id) AS debt FROM suppliers p`
+    : 'SELECT p.*,0::bigint AS debt FROM customers p';
+}
 
 export function registerParties(app: FastifyInstance, pool: Database) {
   for (const table of ['customers', 'suppliers'] as const) {
     app.get(`/api/${table}`, async request => {
       const { q } = searchQuery.parse(request.query);
-      // shortcut: zero debt/empty history in T-01, derive from documents in T-02/03.
-      return { items: (await pool.query(`SELECT *,0::bigint AS debt FROM ${table}
+      return { items: (await pool.query(`${partySelect(table)}
         WHERE ($1::text IS NULL OR concat_ws(' ',name,phone,address,note) ILIKE '%' || $1 || '%') ORDER BY created_at,id`, [q ?? null])).rows };
     });
     app.get(`/api/${table}/:id`, async request => {
       const { id } = z.object({ id: uuid }).parse(request.params);
-      const row = (await pool.query(`SELECT *,0::bigint AS debt FROM ${table} WHERE id=$1`, [id])).rows[0];
+      const row = (await pool.query(`${partySelect(table)} WHERE p.id=$1`, [id])).rows[0];
       if (!row) throw new ApiError(404, 'NOT_FOUND', 'Không tìm thấy khách hàng hoặc nhà cung cấp');
-      return { ...row, ...(table === 'customers' ? { sales: [], warranties: [] } : { purchases: [] }), payments: [] };
+      if (table==='customers') return { ...row,sales:[],warranties:[],payments:[] };
+      const purchases = (await pool.query(`${purchaseSelect} WHERE p.supplier_id=$1 ORDER BY p.created_at DESC,p.id`,[id])).rows;
+      const payments = (await pool.query(`${paymentSelect} JOIN purchases d ON d.id=p.purchase_id WHERE d.supplier_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
+      return { ...row,purchases,payments };
     });
     app.post(`/api/${table}`, async (request, reply) => {
       const input = partyFields.parse(request.body);
@@ -38,7 +47,7 @@ export function registerParties(app: FastifyInstance, pool: Database) {
           [id, ...entries.map(([, value]) => value)])).rows[0];
         if (!row) throw new ApiError(404, 'NOT_FOUND', 'Không tìm thấy khách hàng hoặc nhà cung cấp');
         await audit(client, request.user!.id, 'update', table, id, input);
-        return row;
+        return (await client.query(`${partySelect(table)} WHERE p.id=$1`,[id])).rows[0];
       });
       return reply.code(result.statusCode).send(result.body);
     });
