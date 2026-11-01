@@ -690,6 +690,42 @@ button, input, select, textarea {
   font-weight: 700;
 }
 
+.badge-received {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-processing {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badge-completed {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-cancelled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.badge-partially_returned {
+  background-color: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.badge-returned {
+  background-color: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
 /* Empty State */
 .empty-state-box {
   padding: 48px 24px;
@@ -885,6 +921,29 @@ button, input, select, textarea {
   display: flex;
   justify-content: flex-end;
   background-color: #f8fafc;
+  flex-shrink: 0;
+}
+
+.sale-drawer-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sale-drawer-footer-left {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sale-drawer-footer-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 /* Toast Messages */
@@ -1044,6 +1103,39 @@ button, input, select, textarea {
 
   .drawer-card {
     max-width: 100%;
+  }
+
+  .drawer-footer {
+    padding: 12px 14px;
+  }
+
+  .sale-drawer-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .sale-drawer-footer-left {
+    width: 100%;
+  }
+
+  .sale-drawer-footer-left .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sale-drawer-footer-right {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .sale-drawer-footer-right .btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 

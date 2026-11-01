@@ -1,8 +1,8 @@
 import React from 'react';
-import { Smartphone, Package, Users, Truck, LogOut, ShoppingCart, Receipt } from 'lucide-react';
+import { Smartphone, Package, Users, Truck, LogOut, ShoppingCart, Receipt, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export type ActiveNav = 'purchases' | 'pos' | 'sales' | 'products' | 'customers' | 'suppliers';
+export type ActiveNav = 'purchases' | 'pos' | 'sales' | 'warranties' | 'products' | 'customers' | 'suppliers';
 
 interface SidebarProps {
   activeNav: ActiveNav;
@@ -78,6 +78,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Truck size={17} />
             </div>
             <span>Nhập hàng & Kho</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-item ${activeNav === 'warranties' ? 'active' : ''}`}
+            onClick={() => handleNavClick('warranties')}
+            aria-current={activeNav === 'warranties' ? 'page' : undefined}
+          >
+            <div className="nav-item-icon">
+              <ShieldCheck size={17} />
+            </div>
+            <span>Hồ sơ bảo hành</span>
           </button>
 
           <div className="nav-section-title" style={{ marginTop: 12 }}>Danh mục & Đối tác</div>
