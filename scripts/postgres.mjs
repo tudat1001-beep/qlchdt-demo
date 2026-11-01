@@ -113,6 +113,7 @@ if (action === 'stop') {
         const envFile = join(root, '.env');
         writeFileSync(envFile, readFileSync(envFile, 'utf8').replaceAll('postgresql://qlchdt:', 'postgresql://qlchdt_app:'), { mode: 0o600 });
       }
+      await client.query('ALTER ROLE qlchdt NOLOGIN');
     } finally { await client.end(); }
     console.log('PostgreSQL riêng đã sẵn sàng; .env và tài khoản ở .local/credentials.txt. Không seed dữ liệu kinh doanh.');
   }

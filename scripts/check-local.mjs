@@ -18,6 +18,8 @@ for (const url of [app, test]) {
     assert.equal(role.rolsuper, false, 'Ứng dụng không được dùng superuser.');
     assert.equal(role.rolcreatedb, false);
     assert.equal(role.rolcreaterole, false);
+    const bootstrap = await client.query("SELECT rolcanlogin FROM pg_roles WHERE rolname='qlchdt'");
+    assert.equal(bootstrap.rows[0]?.rolcanlogin, false, 'Tài khoản bootstrap phải vô hiệu hóa đăng nhập.');
   } finally { await client.end(); }
 }
 console.log('PASS: hai database kết nối được, tách biệt, tài khoản ứng dụng không có quyền quản trị cụm.');
