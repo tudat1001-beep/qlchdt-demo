@@ -9,6 +9,8 @@ Verified 2026-11-01 against local PostgreSQL on port 55439 with Vitest 5.0.5, th
 
 Tests require `TEST_DATABASE_URL` naming a database ending `_test`. Both the URL database and PostgreSQL `current_database()` are checked before schema creation. Each suite run owns a random schema; all fixtures and cleanup remain inside it. Tests neither migrate nor delete real `qlchdt` data, and do not truncate the public test schema.
 
+The guarded `scripts/e2e-server.mjs` sets `NODE_ENV=test` and `E2E_SERVER=1`, raising the login limit to 1000 for its 15-minute window because multiple Playwright projects share one test API/IP. `buildApp` stays at five attempts in every other mode; `server/foundation.test.ts` verifies that the sixth attempt returns 429.
+
 ## Coverage and observed behavior
 
 - Repeated/concurrent migration runners apply once and preserve the manager; checksum drift fails. Database constraints reject negative/unsafe VND, a second manager, and audit deletion.

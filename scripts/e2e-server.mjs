@@ -15,7 +15,7 @@ try { assert((await client.query('SELECT current_database() AS name')).rows[0].n
 finally { await client.end(); }
 
 const env = {
-  ...process.env, DATABASE_URL: url, NODE_ENV: 'test', PORT: '3002', HOST: '127.0.0.1',
+  ...process.env, DATABASE_URL: url, NODE_ENV: 'test', E2E_SERVER: '1', PORT: '3002', HOST: '127.0.0.1',
   APP_ORIGIN: 'http://127.0.0.1:5174', WEB_PORT: '5174', API_PROXY: 'http://127.0.0.1:3002',
 };
 const migrate = spawnSync(process.execPath, ['--import', 'tsx', 'server/migrate.ts'], {
