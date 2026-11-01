@@ -66,7 +66,7 @@ if (action === 'stop') {
     if (existingAdmin) {
       url.username = 'qlchdt_admin';
       url.password = existingAdmin.password;
-    }
+    } else url.username = 'qlchdt';
     const client = new pg.Client({ connectionString: url.href });
     await client.connect();
     try {
