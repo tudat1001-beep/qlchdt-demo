@@ -10,6 +10,7 @@ const scrypt = (password: string, salt: string) => new Promise<Buffer>((resolve,
 });
 const cookieName = 'qlchdt_session';
 const lifetimeSeconds = 12 * 60 * 60;
+const loginRateLimitMax = process.env.NODE_ENV === 'test' && process.env.E2E_SERVER === '1' ? 1000 : 5;
 export type User = { id: string; username: string };
 declare module 'fastify' { interface FastifyRequest { user: User | null } }
 
@@ -64,7 +65,7 @@ export function registerAuth(app: FastifyInstance, pool: Database, origin: strin
   const cookieOptions = { path: '/', httpOnly: true, sameSite: 'strict' as const, secure };
   // Keep nonexistent usernames on the same expensive password verification path.
   const dummy = hashPassword(randomBytes(32).toString('hex'));
-  app.post('/api/auth/login', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (request, reply) => {
+  app.post('/api/auth/login', { config: { rateLimit: { max: loginRateLimitMax, timeWindow: '15 minutes' } } }, async (request, reply) => {
     const input = z.object({ username: z.string().min(1).max(100), password: z.string().min(1).max(1024) }).strict().parse(request.body);
     const row = (await pool.query<User & { password_hash: string }>('SELECT id,username,password_hash FROM users WHERE username=$1', [input.username])).rows[0];
     const valid = await matches(input.password, row?.password_hash ?? await dummy);
