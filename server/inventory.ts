@@ -61,6 +61,8 @@ export function registerInventory(app: FastifyInstance,pool: Database) {
     return reply.code(result.statusCode).send(result.body);
   });
   app.get('/api/stock-movements',async () => ({items:(await pool.query(`SELECT s.*,coalesce(sl.product_name,l.product_name) AS product_name,d.imei,
-    CASE WHEN s.sale_line_id IS NOT NULL THEN 'sale' ELSE 'purchase' END AS reference_type,coalesce(sl.sale_id,l.purchase_id) AS reference_id
-    FROM stock_movements s JOIN purchase_lines l ON l.id=s.purchase_line_id LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN sale_lines sl ON sl.id=s.sale_line_id ORDER BY s.created_at DESC,s.id`)).rows}));
+    CASE WHEN s.return_line_id IS NOT NULL THEN 'return' WHEN s.sale_line_id IS NOT NULL THEN 'sale' ELSE 'purchase' END AS reference_type,
+    coalesce(rl.return_id,sl.sale_id,l.purchase_id) AS reference_id
+    FROM stock_movements s JOIN purchase_lines l ON l.id=s.purchase_line_id LEFT JOIN devices d ON d.id=s.device_id
+    LEFT JOIN sale_lines sl ON sl.id=s.sale_line_id LEFT JOIN return_lines rl ON rl.id=s.return_line_id ORDER BY s.created_at DESC,s.id`)).rows}));
 }

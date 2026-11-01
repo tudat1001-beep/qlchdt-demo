@@ -55,7 +55,7 @@ describe('versioned migrations and database guards', () => {
   it('serializes repeat migrations and preserves existing records', async () => {
     expect(await Promise.all([migrate(pool), migrate(pool)])).toEqual([[], []]);
     expect((await pool.query('SELECT count(*) FROM users')).rows[0].count).toBe(1);
-    expect((await pool.query('SELECT version FROM schema_migrations')).rows).toHaveLength(3);
+    expect((await pool.query('SELECT version FROM schema_migrations')).rows).toHaveLength(4);
   });
   it('rejects checksum drift rather than silently changing an applied migration', async () => {
     const {version,checksum} = (await pool.query('SELECT version,checksum FROM schema_migrations ORDER BY version')).rows[0];
@@ -89,7 +89,7 @@ describe('authentication and origin boundaries', () => {
       expect(result.statusCode, url).toBe(401);
       expect(result.headers['cache-control']).toBe('no-store');
     }
-    for (const url of ['/api/products','/api/purchases','/api/sales','/api/payments'])
+    for (const url of ['/api/products','/api/purchases','/api/sales','/api/payments','/api/returns',`/api/sales/${randomUUID()}/cancel`])
       expect((await app.inject({ method: 'POST', url, headers: { origin }, payload: product() })).statusCode).toBe(401);
   });
   it('sets HttpOnly strict session cookie and persists only its hash', async () => {
@@ -139,7 +139,7 @@ describe('authentication and origin boundaries', () => {
     expect((await app.inject({ url: '/api/auth/me', headers: { cookie: temporary } })).statusCode).toBe(401);
   });
   it('checks origin on authenticated mutations including logout', async () => {
-    for (const url of ['/api/products', '/api/customers', '/api/suppliers','/api/purchases','/api/sales','/api/payments', '/api/auth/logout']) {
+    for (const url of ['/api/products', '/api/customers', '/api/suppliers','/api/purchases','/api/sales','/api/payments','/api/returns',`/api/sales/${randomUUID()}/cancel`, '/api/auth/logout']) {
       for (const value of [undefined, 'https://evil.example']) {
         expect((await app.inject({ method: 'POST', url, headers: { cookie, ...(value ? { origin: value } : {}) }, payload: {} })).statusCode).toBe(403);
       }

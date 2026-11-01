@@ -49,3 +49,25 @@ The transaction suite includes the seven inventory tests above plus fourteen sal
 Forced failures at both sale cash insertion and final audit insertion leave all sale, line, allocation, stock movement, payment, cash, audit and idempotency counts unchanged; devices remain available and lot quantities unchanged, and retrying the same key succeeds. An initial test expected proportional remainder allocation [1,1] for gross [3,2] and discount 2; the documented first-line remainder rule correctly yields [2,0], with net [1,2] and invoice total 3. SOL confirmed the rule and additional detail fields through Orca ask before final verification.
 
 No frontend build, browser/E2E, production database migration or T-03 reversal/warranty/report behavior was checked in this worker task. T-03 must update debt/payment validation for linked reversal reductions; current T-02 only posts purchases, sales and their payments.
+
+## T-03a final sale return/cancellation verification
+
+Verified 2026-11-01 on PostgreSQL in dedicated `_test` schemas only, after SOL approval of T-02 and the reversal read fields. Each suite checks the configured URL and actual current_database before schema creation; cleanup touches only its confirmed-owned random schema.
+
+- `node node_modules/typescript/bin/tsc -p server/tsconfig.json --noEmit` - exit 0.
+- `node node_modules/vitest/vitest.mjs run server/transactions.test.ts` - exit 0, **35/35 passed**, 5.36 seconds at 10:54:10 Asia/Saigon; fourteen new return/cancel cases.
+- `node node_modules/vitest/vitest.mjs run server/foundation.test.ts server/transactions.test.ts tests/money.test.ts` - exit 0, **59/59 passed**, 3 files, 12.50 seconds at 10:55:09 Asia/Saigon (21 foundation, 35 transaction, 3 money tests), after strengthening the old-phone-sale guard test.
+- `git diff --check` - exit 0 before final documentation/commit.
+
+New PostgreSQL evidence covers:
+
+- Discounted three-unit returns of 1+1+1 produce values [1,2,2] and the same total refund/cost as one full return; MAX_SAFE refund and zero-price quantity-derived statuses preserve exact values.
+- Partial returns restore original FIFO lots across different costs in original allocation order, and subsequent resale reuses the original lot IDs and purchase provenance.
+- Phone sold-return-resold-return history preserves original cost/source and all five stock movements; returning a phone from an old sale with other lines still outstanding fails after the phone has been resold. Quarantine blocks another sale and available stock count excludes that phone.
+- Concurrent different-key returns of one phone and the last accessory each have exactly one success, one reversal and one stock restoration. A collection/return race yields either valid serialized outcome, with net receipts plus remaining debt equal to remaining net invoice value.
+- Mixed original cash/bank receipts first reduce debt without fake payments or cash movements, then refund only paid value in the selected method. Later collections and direct SQL overpayment attempts fail.
+- Forced cash or audit failure after stock changes restores all sale/return/line/allocation/stock/payment/cash/audit/idempotency counts, phone status and lot quantity; same-key retry succeeds.
+- Parallel same-key returns create one refund; changed payload conflicts. Partial-return cancellation reverses only the remaining quantity/value/cost; retries replay, another cancellation/return fails, and stored original sale data remains unchanged.
+- Invalid ownership, duplicate lines, missing keys, invalid quantities/enums/reasons fail without writes; database guards reject return history changes and cumulative line/allocation overrun. Foundation tests now cover four repeatable migrations and unauthenticated/hostile-origin return/cancel requests.
+
+No runtime database migration, frontend/browser/E2E, supplier return, warranty, cash/report module or shared money edit was performed. Those modules remain for separately dispatched work; SOL still needs independent review and integration verification before applying migration 004 to the runtime database.

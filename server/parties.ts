@@ -26,7 +26,8 @@ export function registerParties(app: FastifyInstance, pool: Database) {
       if (table==='customers') {
         const sales=(await pool.query(`${saleSelect} WHERE s.customer_id=$1 ORDER BY s.created_at DESC,s.id`,[id])).rows;
         const payments=(await pool.query(`${paymentSelect} JOIN sales d ON d.id=p.sale_id WHERE d.customer_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
-        return {...row,sales,payments,warranties:[]};
+        const returns=(await pool.query('SELECT r.* FROM returns r JOIN sales s ON s.id=r.sale_id WHERE s.customer_id=$1 ORDER BY r.created_at,r.id',[id])).rows;
+        return {...row,sales,payments,returns,warranties:[]};
       }
       const purchases = (await pool.query(`${purchaseSelect} WHERE p.supplier_id=$1 ORDER BY p.created_at DESC,p.id`,[id])).rows;
       const payments = (await pool.query(`${paymentSelect} JOIN purchases d ON d.id=p.purchase_id WHERE d.supplier_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;

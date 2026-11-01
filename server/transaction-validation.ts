@@ -29,3 +29,9 @@ export const saleInput = z.object({
 }).strict();
 export const collectionInput = z.object({party_type:z.enum(['customer','supplier']),reference_id:uuid,
   method:z.enum(['cash','bank']),amount:money.refine(value => value>0),note}).strict();
+
+export const cancelInput=z.object({reason:z.string().trim().min(1).max(4000),method:z.enum(['cash','bank']),
+  disposition:z.enum(['available','quarantine'])}).strict();
+export const returnInput=cancelInput.extend({sale_id:uuid,
+  lines:z.array(z.object({sale_line_id:uuid,quantity}).strict()).min(1).max(200),
+}).strict().refine(value => new Set(value.lines.map(line => line.sale_line_id)).size===value.lines.length,'Dòng trả bị lặp');

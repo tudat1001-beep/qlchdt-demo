@@ -46,7 +46,7 @@ async function receivePhone() {
 }
 async function ledgerCounts() {
   const result:Record<string,number>={};
-  for (const table of ['sales','sale_lines','sale_allocations','stock_movements','payments','cash_entries','audit_logs','idempotency'])
+  for (const table of ['sales','sale_lines','sale_allocations','returns','return_lines','return_allocations','stock_movements','payments','cash_entries','audit_logs','idempotency'])
     result[table]=(await pool.query(`SELECT count(*) FROM ${table}`)).rows[0].count;
   return result;
 }
@@ -359,5 +359,189 @@ describe('debt collections',() => {
     expect((await get(`/api/sales/${sold.id}`)).json()).toMatchObject({paid:40,debt:60});
     expect((await post('/api/payments',{...payload,reference_id:randomUUID()})).statusCode).toBe(404);
     expect((await app.inject({method:'POST',url:'/api/payments',headers:{cookie,origin},payload})).statusCode).toBe(400);
+  });
+});
+
+const returnSale=(document:any,quantity:number,method:'cash'|'bank'='cash',key?:string,disposition:'available'|'quarantine'='available') =>
+  post('/api/returns',{sale_id:document.id,reason:'Customer return',disposition,method,lines:[{sale_line_id:document.lines[0].id,quantity}]},key);
+
+describe('sale returns and cancellation',() => {
+  it('conserves discounted dong and original cost for 1+1+1 returns versus one full return',async () => {
+    const item=await receiveAccessory(6,11);
+    const first=(await sale([{product_id:item.id,quantity:3,unit_price:2}],[{method:'cash',amount:5}],1,null)).json();
+    const second=(await sale([{product_id:item.id,quantity:3,unit_price:2}],[{method:'bank',amount:5}],1,null)).json();
+    const parts=[];
+    for (let index=0;index<3;index++) {
+      const response=await returnSale(first,1);
+      expect(response.statusCode,response.body).toBe(201); parts.push(response.json());
+    }
+    const full=await returnSale(second,3,'bank');
+    expect(full.statusCode,full.body).toBe(201);
+    expect(parts.map(part => part.total)).toEqual([1,2,2]);
+    expect(parts.reduce((sum,part) => sum+part.refund,0)).toBe(full.json().refund);
+    expect(parts.reduce((sum,part) => sum+part.cost,0)).toBe(full.json().cost);
+    expect(full.json()).toMatchObject({total:5,cost:33,refund:5,debt_reduction:0});
+    const detail=(await get(`/api/sales/${first.id}`)).json();
+    expect(detail).toMatchObject({total:5,paid:5,returned_total:5,net_total:0,refunded:5,paid_net:0,debt:0,status:'returned'});
+    expect(detail.lines[0]).toMatchObject({returned_quantity:3,total:5,cost:33});
+    expect(detail.returns).toHaveLength(3);
+    expect((await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity).toBe(6);
+    expect((await returnSale(first,1)).statusCode).toBe(422);
+  });
+  it('restores original FIFO allocations in order across partial returns, preserving purchase provenance for resale',async () => {
+    const item=await product();
+    const bought=(await purchase([{product_id:item.id,quantity:2,unit_cost:10},{product_id:item.id,quantity:2,unit_cost:21}])).json();
+    const sold=(await sale([{product_id:item.id,quantity:4,unit_price:30}],[{method:'cash',amount:120}],0,null)).json();
+    const first=await returnSale(sold,3);
+    expect(first.statusCode,first.body).toBe(201); expect(first.json()).toMatchObject({cost:41,total:90});
+    const second=await returnSale(sold,1);
+    expect(second.statusCode,second.body).toBe(201); expect(second.json().cost).toBe(21);
+    const lots=(await pool.query('SELECT * FROM accessory_lots WHERE product_id=$1 ORDER BY created_at,id',[item.id])).rows;
+    expect(lots.map(lot => [lot.id,lot.purchase_line_id,lot.remaining_quantity])).toEqual(bought.lines.map((line:any) => [line.lots[0].id,line.id,2]));
+    const resold=(await sale([{product_id:item.id,quantity:3,unit_price:30}],[{method:'bank',amount:90}],0,null)).json();
+    expect(resold.cost).toBe(41);
+    expect(resold.lines[0].allocations.map((allocation:any) => allocation.lot_id)).toEqual(lots.map(lot => lot.id));
+    const movements=(await get('/api/stock-movements')).json().items.filter((row:any) => row.reference_id===first.json().id);
+    expect(movements).toHaveLength(2);
+    expect(movements.every((row:any) => row.reference_type==='return' && row.quantity>0 && row.cost>0 && row.sale_line_id===sold.lines[0].id)).toBe(true);
+  });
+  it('keeps phone sold-return-resold-return history and quarantines only the returned phone',async () => {
+    const phone=await receivePhone(); const accessory=await receiveAccessory();
+    const line={product_id:phone.id,device_id:phone.device.id,quantity:1,unit_price:100};
+    const first=(await sale([line,{product_id:accessory.id,quantity:1,unit_price:10}],[{method:'cash',amount:110}],0,null)).json();
+    expect((await returnSale(first,1)).statusCode).toBe(201);
+    expect((await get(`/api/sales/${first.id}`)).json().status).toBe('partially_returned');
+    const secondResponse=await sale([line],[{method:'bank',amount:100}],0,null);
+    expect(secondResponse.statusCode,secondResponse.body).toBe(201);
+    const second=secondResponse.json();
+    expect((await returnSale(first,1)).statusCode).toBe(422);
+    expect((await pool.query('SELECT status FROM devices WHERE id=$1',[phone.device.id])).rows[0].status).toBe('sold');
+    expect((await returnSale(second,1,'bank',undefined,'quarantine')).statusCode).toBe(201);
+    const device=(await pool.query('SELECT * FROM devices WHERE id=$1',[phone.device.id])).rows[0];
+    expect(device).toMatchObject({status:'quarantine',cost:30,purchase_line_id:phone.device.purchase_line_id});
+    expect((await pool.query('SELECT count(*) FROM sale_lines WHERE device_id=$1',[phone.device.id])).rows[0].count).toBe(2);
+    expect((await pool.query('SELECT count(*) FROM stock_movements WHERE device_id=$1',[phone.device.id])).rows[0].count).toBe(5);
+    expect((await get(`/api/products?q=${phone.sku}`)).json().items[0].stock_quantity).toBe(0);
+    expect((await sale([line],[{method:'cash',amount:100}],0,null)).statusCode).toBe(409);
+  });
+  it.each(['PHONE','ACCESSORY'] as const)('allows only one different-key concurrent return of the last %s quantity',async kind => {
+    const item=kind==='PHONE'?await receivePhone():await receiveAccessory();
+    const line={product_id:item.id,quantity:1,unit_price:20,...('device' in item?{device_id:item.device.id}:{})};
+    const sold=(await sale([line],[{method:'cash',amount:20}],0,null)).json();
+    const responses=await Promise.all([returnSale(sold,1),returnSale(sold,1,'bank')]);
+    expect(responses.map(response => response.statusCode).sort()).toEqual([201,422]);
+    expect((await pool.query('SELECT count(*) FROM returns WHERE sale_id=$1',[sold.id])).rows[0].count).toBe(1);
+    expect((await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity).toBe(1);
+    expect((await get(`/api/sales/${sold.id}`)).json()).toMatchObject({debt:0,paid_net:0,refunded:20});
+  });
+  it('reduces debt before refunding mixed-method receipts and exposes net customer history without fake payments',async () => {
+    const ownCustomer=(await post('/api/customers',{name:'Return customer'})).json().id;
+    const item=await receiveAccessory(2);
+    const sold=(await sale([{product_id:item.id,quantity:2,unit_price:50}],[{method:'cash',amount:30},{method:'bank',amount:20}],0,ownCustomer)).json();
+    const first=await returnSale(sold,1,'bank');
+    expect(first.statusCode,first.body).toBe(201); expect(first.json()).toMatchObject({total:50,debt_reduction:50,refund:0});
+    expect((await pool.query('SELECT id FROM cash_entries WHERE return_id=$1',[first.json().id])).rowCount).toBe(0);
+    expect((await get(`/api/sales/${sold.id}`)).json()).toMatchObject({total:100,net_total:50,paid:50,paid_net:50,debt:0,status:'partially_returned'});
+    expect((await post('/api/payments',{party_type:'customer',reference_id:sold.id,method:'cash',amount:1})).statusCode).toBe(422);
+    const second=await returnSale(sold,1,'bank');
+    expect(second.statusCode,second.body).toBe(201); expect(second.json()).toMatchObject({total:50,debt_reduction:0,refund:50});
+    expect((await pool.query('SELECT direction,method,amount,category FROM cash_entries WHERE return_id=$1',[second.json().id])).rows).toEqual([{direction:'out',method:'bank',amount:50,category:'sale_refund'}]);
+    const party=(await get(`/api/customers/${ownCustomer}`)).json();
+    expect(party.debt).toBe(0); expect(party.payments).toHaveLength(2); expect(party.returns).toHaveLength(2);
+    expect(party.sales[0]).toMatchObject({net_total:0,paid_net:0,refunded:50,status:'returned'});
+    await expect(pool.query("INSERT INTO payments(sale_id,method,amount,actor) VALUES ($1,'cash',1,$2)",[sold.id,actor])).rejects.toMatchObject({code:'23514'});
+  });
+  it('serializes a return against collection and never overpays or produces negative debt',async () => {
+    const item=await receiveAccessory(2);
+    const sold=(await sale([{product_id:item.id,quantity:2,unit_price:50}],[{method:'cash',amount:30}])).json();
+    const [returned,collected]=await Promise.all([returnSale(sold,1,'bank'),post('/api/payments',{party_type:'customer',reference_id:sold.id,method:'bank',amount:50})]);
+    expect(returned.statusCode,returned.body).toBe(201); expect([201,422]).toContain(collected.statusCode);
+    const detail=(await get(`/api/sales/${sold.id}`)).json();
+    expect(detail.net_total).toBe(50); expect(detail.paid_net+detail.debt).toBe(50);
+    expect(detail.debt).toBe(collected.statusCode===201?0:20);
+    expect(detail.refunded).toBe(collected.statusCode===201?30:0);
+    const cash=(await pool.query(`SELECT sum(CASE WHEN c.direction='in' THEN c.amount ELSE -c.amount END)::bigint AS net
+      FROM cash_entries c LEFT JOIN payments p ON p.id=c.payment_id LEFT JOIN returns r ON r.id=c.return_id WHERE p.sale_id=$1 OR r.sale_id=$1`,[sold.id])).rows[0].net;
+    expect(cash).toBe(detail.paid_net);
+    if (detail.debt) expect((await post('/api/payments',{party_type:'customer',reference_id:sold.id,method:'cash',amount:detail.debt})).statusCode).toBe(201);
+    expect((await post('/api/payments',{party_type:'customer',reference_id:sold.id,method:'cash',amount:1})).statusCode).toBe(422);
+  });
+  it.each(['cash_entries','audit_logs'])('rolls back every return/device/lot/cash/key write after forced %s failure and retries cleanly',async table => {
+    const item=await receiveAccessory(); const phone=await receivePhone(); const key=randomUUID();
+    const sold=(await sale([{product_id:item.id,quantity:1,unit_price:20},{product_id:phone.id,device_id:phone.device.id,quantity:1,unit_price:100}],[{method:'cash',amount:120}],0,null)).json();
+    const payload={sale_id:sold.id,reason:'Rollback return',disposition:'available',method:'cash',lines:sold.lines.map((line:any) => ({sale_line_id:line.id,quantity:1}))};
+    const before=await ledgerCounts();
+    await pool.query(`CREATE OR REPLACE FUNCTION fail_return_write_test() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced return failure'; END $$`);
+    await pool.query(`CREATE TRIGGER fail_return_write BEFORE INSERT ON ${table} FOR EACH ROW EXECUTE FUNCTION fail_return_write_test()`);
+    try {
+      expect((await post('/api/returns',payload,key)).statusCode).toBe(500);
+      expect(await ledgerCounts()).toEqual(before);
+      expect((await pool.query('SELECT status FROM devices WHERE id=$1',[phone.device.id])).rows[0].status).toBe('sold');
+      expect((await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity).toBe(0);
+      expect((await get(`/api/sales/${sold.id}`)).json()).toMatchObject({returned_total:0,refunded:0,status:'posted'});
+    } finally { await pool.query(`DROP TRIGGER fail_return_write ON ${table}`); }
+    expect((await post('/api/returns',payload,key)).statusCode).toBe(201);
+  });
+  it('replays parallel same-key returns exactly once and rejects changed payload',async () => {
+    const item=await receiveAccessory(2);
+    const sold=(await sale([{product_id:item.id,quantity:2,unit_price:10}],[{method:'cash',amount:20}],0,null)).json(); const key=randomUUID();
+    const responses=await Promise.all(Array.from({length:4},() => returnSale(sold,1,'cash',key)));
+    for (const response of responses) { expect(response.statusCode,response.body).toBe(201); expect(response.json()).toEqual(responses[0].json()); }
+    expect((await returnSale(sold,1,'bank',key)).statusCode).toBe(409);
+    expect((await get(`/api/sales/${sold.id}`)).json().lines[0].returned_quantity).toBe(1);
+    expect((await pool.query('SELECT count(*) FROM cash_entries c JOIN returns r ON r.id=c.return_id WHERE r.sale_id=$1',[sold.id])).rows[0].count).toBe(1);
+  });
+  it('cancels only the remainder after partial returns, replays cancellation and rejects another reversal',async () => {
+    const item=await receiveAccessory(3);
+    const sold=(await sale([{product_id:item.id,quantity:3,unit_price:20}],[{method:'cash',amount:60}],0,null)).json();
+    expect((await returnSale(sold,1)).statusCode).toBe(201);
+    const payload={reason:'Cancel remaining',disposition:'available',method:'bank'}; const key=randomUUID();
+    const cancelled=await post(`/api/sales/${sold.id}/cancel`,payload,key);
+    expect(cancelled.statusCode,cancelled.body).toBe(201);
+    expect(cancelled.json()).toMatchObject({kind:'cancel',total:40,cost:20,refund:40,debt_reduction:0});
+    expect(cancelled.json().lines[0].quantity).toBe(2);
+    expect((await post(`/api/sales/${sold.id}/cancel`,payload,key)).json()).toEqual(cancelled.json());
+    expect((await post(`/api/sales/${sold.id}/cancel`,payload)).statusCode).toBe(422);
+    expect((await returnSale(sold,1)).statusCode).toBe(422);
+    expect((await get(`/api/sales/${sold.id}`)).json()).toMatchObject({total:60,returned_total:60,net_total:0,paid_net:0,debt:0,status:'cancelled'});
+    expect((await pool.query('SELECT total,status FROM sales WHERE id=$1',[sold.id])).rows[0]).toEqual({total:60,status:'posted'});
+    expect((await get(`/api/products?q=${item.sku}`)).json().items[0].stock_quantity).toBe(3);
+  });
+  it('validates line ownership, duplicate IDs, quantities, reason, disposition and idempotency before writes',async () => {
+    const item=await receiveAccessory(2);
+    const sold=(await sale([{product_id:item.id,quantity:1,unit_price:20}])).json();
+    const payload={sale_id:sold.id,reason:'Return',disposition:'available',method:'cash',lines:[{sale_line_id:sold.lines[0].id,quantity:1}]};
+    const before=await ledgerCounts();
+    for (const change of [{reason:''},{disposition:'sold'},{method:'other'},{lines:[]},{lines:[{sale_line_id:sold.lines[0].id,quantity:0}]},{lines:[...payload.lines,...payload.lines]}])
+      expect((await post('/api/returns',{...payload,...change})).statusCode).toBe(400);
+    expect((await post('/api/returns',{...payload,lines:[{sale_line_id:randomUUID(),quantity:1}]})).statusCode).toBe(422);
+    expect((await returnSale(sold,2)).statusCode).toBe(422);
+    expect((await post('/api/returns',{...payload,sale_id:randomUUID()})).statusCode).toBe(404);
+    expect((await app.inject({method:'POST',url:'/api/returns',headers:{cookie,origin},payload})).statusCode).toBe(400);
+    expect(await ledgerCounts()).toEqual(before);
+  });
+  it('returns zero-price stock by quantity and preserves MAX_SAFE refund exactly',async () => {
+    const free=await receiveAccessory(2,0);
+    const sold=(await sale([{product_id:free.id,quantity:2,unit_price:0}],[],0,null)).json();
+    expect((await returnSale(sold,1)).statusCode).toBe(201);
+    expect((await get(`/api/sales/${sold.id}`)).json().status).toBe('partially_returned');
+    expect((await returnSale(sold,1)).statusCode).toBe(201);
+    expect((await get(`/api/sales/${sold.id}`)).json().status).toBe('returned');
+    const item=await receiveAccessory(1,0);
+    const expensive=(await sale([{product_id:item.id,quantity:1,unit_price:Number.MAX_SAFE_INTEGER}],[{method:'bank',amount:Number.MAX_SAFE_INTEGER}],0,null)).json();
+    const returned=await returnSale(expensive,1,'bank');
+    expect(returned.statusCode,returned.body).toBe(201); expect(returned.json().refund).toBe(Number.MAX_SAFE_INTEGER);
+    expect((await get(`/api/sales/${expensive.id}`)).json()).toMatchObject({debt:0,paid_net:0,refunded:Number.MAX_SAFE_INTEGER});
+  });
+  it('protects return history and original allocation limits directly in PostgreSQL',async () => {
+    const line=(await pool.query('SELECT * FROM return_lines LIMIT 1')).rows[0];
+    await expect(pool.query('DELETE FROM returns WHERE id=$1',[line.return_id])).rejects.toMatchObject({code:'23514'});
+    await expect(pool.query('UPDATE return_lines SET quantity=1 WHERE id=$1',[line.id])).rejects.toMatchObject({code:'23514'});
+    await expect(pool.query('DELETE FROM return_allocations')).rejects.toMatchObject({code:'23514'});
+    await expect(pool.query(`INSERT INTO return_lines(return_id,sale_id,sale_line_id,product_id,position,quantity,value,cost)
+      SELECT return_id,sale_id,sale_line_id,product_id,999,2147483647,0,0 FROM return_lines WHERE id=$1`,[line.id])).rejects.toMatchObject({code:'23514'});
+    const allocation=(await pool.query('SELECT * FROM return_allocations LIMIT 1')).rows[0];
+    await expect(pool.query(`INSERT INTO return_allocations(return_line_id,sale_line_id,sale_allocation_id,quantity,cost)
+      VALUES ($1,$2,$3,2147483647,0)`,[allocation.return_line_id,allocation.sale_line_id,allocation.sale_allocation_id])).rejects.toMatchObject({code:'23514'});
   });
 });
