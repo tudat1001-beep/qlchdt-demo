@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import pg from 'pg';
 import dotenv from 'dotenv';
@@ -14,9 +14,13 @@ mkdirSync(local, { recursive: true });
 dotenv.config({ path: join(root, '.env'), quiet: true });
 
 function run(name, args) {
-  const result = spawnSync(join(bin, `${name}.exe`), args, { encoding: 'utf8', windowsHide: true });
+  const result = spawnSync(join(bin, `${name}.exe`), args, {
+    encoding: 'utf8', windowsHide: true,
+    // pg_ctl's Windows child retains pipes; ignore them so startup can finish.
+    stdio: name === 'pg_ctl' ? 'ignore' : 'pipe',
+  });
   if (result.status !== 0) throw new Error(`${name}: ${result.stderr || result.stdout || result.error}`);
-  return result.stdout;
+  return result.stdout ?? `${name}: OK`;
 }
 
 const action = process.argv[2] ?? 'start';
