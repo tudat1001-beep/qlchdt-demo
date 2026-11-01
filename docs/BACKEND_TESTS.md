@@ -34,3 +34,18 @@ T-02/T-03 transaction modules, full-app UI/build/E2E and deployed HTTPS were not
 - Both suites own random schemas only after URL/current_database `_test` guards; cleanup drops only confirmed-owned schemas. Earlier T-01 one-migration assertions now cover both versions and checksum drift targets a single version.
 
 Sales/FIFO consumption and collections remain for the second T-02 commit; no reversals/warranty/report work is included in this checkpoint.
+
+## T-02 final sales/FIFO/collections verification
+
+Verified 2026-11-01 on the same dedicated local PostgreSQL `_test` database, with a random owned schema per suite; no real inventory or customer data was written or reset.
+
+- `node node_modules/typescript/bin/tsc -p server/tsconfig.json --noEmit` - exit 0.
+- `node node_modules/vitest/vitest.mjs run server/transactions.test.ts` - exit 0, **21/21 passed**, 4.06 seconds at 10:47:52 Asia/Saigon.
+- `node node_modules/vitest/vitest.mjs run server/foundation.test.ts server/transactions.test.ts tests/money.test.ts` - exit 0, **45/45 passed**, 3 files, 12.15 seconds at 10:48:16 Asia/Saigon (21 foundation, 21 transaction, 3 money tests).
+- `git diff --check` - exit 0 before final documentation/commit.
+
+The transaction suite includes the seven inventory tests above plus fourteen sales/collection cases: FIFO across different-cost lots; immutable customer/product/price snapshots after edits; mixed cash/bank and derived debt/history; duplicate accessory/device lines and distinct same-model devices; oversells, device-product mismatches and unavailable device states; different-key parallel sales of the last accessory and same IMEI with exactly one success; parallel same-key sales and payload conflicts; debt without customer, overpayment and invalid input; exact whole-dong discount allocation; zero-price sales; multiplication, aggregate gross/payment/cost overflow and exact MAX_SAFE boundary; PostgreSQL append-only guards; parallel customer and supplier collections without overpayment; same-key collection replay and conflicts.
+
+Forced failures at both sale cash insertion and final audit insertion leave all sale, line, allocation, stock movement, payment, cash, audit and idempotency counts unchanged; devices remain available and lot quantities unchanged, and retrying the same key succeeds. An initial test expected proportional remainder allocation [1,1] for gross [3,2] and discount 2; the documented first-line remainder rule correctly yields [2,0], with net [1,2] and invoice total 3. SOL confirmed the rule and additional detail fields through Orca ask before final verification.
+
+No frontend build, browser/E2E, production database migration or T-03 reversal/warranty/report behavior was checked in this worker task. T-03 must update debt/payment validation for linked reversal reductions; current T-02 only posts purchases, sales and their payments.

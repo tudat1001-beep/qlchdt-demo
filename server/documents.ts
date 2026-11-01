@@ -5,7 +5,10 @@ import { ApiError } from './errors.js';
 export type Reader = Pick<Database,'query'> | Pick<PoolClient,'query'>;
 export const purchaseSelect = `SELECT p.*,coalesce((SELECT sum(amount) FROM payments WHERE purchase_id=p.id),0)::money_vnd AS paid,
   (p.total-coalesce((SELECT sum(amount) FROM payments WHERE purchase_id=p.id),0))::money_vnd AS debt FROM purchases p`;
-export const paymentSelect = `SELECT p.*,p.purchase_id AS reference_id,'supplier'::text AS party_type FROM payments p`;
+export const paymentSelect = `SELECT p.*,coalesce(p.purchase_id,p.sale_id) AS reference_id,
+  CASE WHEN p.purchase_id IS NOT NULL THEN 'supplier' ELSE 'customer' END AS party_type FROM payments p`;
+export const saleSelect = `SELECT s.*,coalesce((SELECT sum(amount) FROM payments WHERE sale_id=s.id),0)::money_vnd AS paid,
+  (s.total-coalesce((SELECT sum(amount) FROM payments WHERE sale_id=s.id),0))::money_vnd AS debt FROM sales s`;
 
 export async function purchaseDetail(db: Reader, id: string) {
   const document = (await db.query(`${purchaseSelect} WHERE p.id=$1`,[id])).rows[0];
@@ -25,8 +28,18 @@ export async function lockProducts(client: PoolClient, ids: string[]) {
   return new Map(rows.map(row => [row.id,row]));
 }
 
-export async function recordPayment(client: PoolClient, actor: string, purchaseId: string, method: 'cash'|'bank', amount: number, note: string, category: 'purchase'|'supplier_payment') {
-  const payment = (await client.query('INSERT INTO payments(purchase_id,method,amount,note,actor) VALUES ($1,$2,$3,$4,$5) RETURNING *',[purchaseId,method,amount,note,actor])).rows[0];
-  await client.query("INSERT INTO cash_entries(payment_id,direction,method,amount,category,note,actor) VALUES ($1,'out',$2,$3,$4,$5,$6)",[payment.id,method,amount,category,note,actor]);
-  return { ...payment, reference_id:purchaseId,party_type:'supplier' };
+export async function recordPayment(client: PoolClient, actor: string, referenceId: string, partyType:'supplier'|'customer', method: 'cash'|'bank', amount: number, note: string, category: 'purchase'|'supplier_payment'|'sale'|'customer_payment') {
+  const payment = (await client.query('INSERT INTO payments(purchase_id,sale_id,method,amount,note,actor) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
+    [partyType==='supplier'?referenceId:null,partyType==='customer'?referenceId:null,method,amount,note,actor])).rows[0];
+  await client.query('INSERT INTO cash_entries(payment_id,direction,method,amount,category,note,actor) VALUES ($1,$2,$3,$4,$5,$6,$7)',[payment.id,partyType==='supplier'?'out':'in',method,amount,category,note,actor]);
+  return { ...payment, reference_id:referenceId,party_type:partyType };
+}
+
+export async function saleDetail(db:Reader,id:string) {
+  const document=(await db.query(`${saleSelect} WHERE s.id=$1`,[id])).rows[0];
+  if (!document) throw new ApiError(404,'NOT_FOUND','Không tìm thấy phiếu bán');
+  const lines=(await db.query('SELECT *,0::integer AS returned_quantity FROM sale_lines WHERE sale_id=$1 ORDER BY position',[id])).rows;
+  const allocations=(await db.query('SELECT a.* FROM sale_allocations a JOIN sale_lines l ON l.id=a.sale_line_id WHERE l.sale_id=$1 ORDER BY l.position,a.position',[id])).rows;
+  const payments=(await db.query(`${paymentSelect} WHERE p.sale_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
+  return {...document,lines:lines.map(line => ({...line,allocations:allocations.filter(allocation => allocation.sale_line_id===line.id)})),payments,returns:[]};
 }

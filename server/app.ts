@@ -11,6 +11,8 @@ import type { Database } from './db.js';
 import { ApiError } from './errors.js';
 import { registerParties } from './parties.js';
 import { registerInventory } from './inventory.js';
+import { registerSales } from './sales.js';
+import { registerPayments } from './payments.js';
 
 export interface AppOptions { pool: Database; origin: string; secureCookies?: boolean; logger?: boolean; distPath?: string }
 
@@ -43,6 +45,8 @@ export async function buildApp({ pool, origin, secureCookies = false, logger = f
   registerCatalog(app, pool);
   registerParties(app, pool);
   registerInventory(app,pool);
+  registerSales(app,pool);
+  registerPayments(app,pool);
   if (existsSync(`${distPath}/index.html`)) await app.register(staticFiles, {
     root: distPath, wildcard: false,
     setHeaders(reply, path) {

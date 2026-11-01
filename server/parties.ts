@@ -4,12 +4,12 @@ import { partyFields, partyPatch, searchQuery, uuid } from '../shared/validation
 import type { Database } from './db.js';
 import { ApiError } from './errors.js';
 import { audit, idempotent } from './idempotency.js';
-import { paymentSelect,purchaseSelect } from './documents.js';
+import { paymentSelect,purchaseSelect,saleSelect } from './documents.js';
 
 function partySelect(table:'customers'|'suppliers') {
   return table==='suppliers'
     ? `SELECT p.*,(SELECT coalesce(sum(d.debt),0)::money_vnd FROM (${purchaseSelect}) d WHERE d.supplier_id=p.id) AS debt FROM suppliers p`
-    : 'SELECT p.*,0::bigint AS debt FROM customers p';
+    : `SELECT p.*,(SELECT coalesce(sum(d.debt),0)::money_vnd FROM (${saleSelect}) d WHERE d.customer_id=p.id) AS debt FROM customers p`;
 }
 
 export function registerParties(app: FastifyInstance, pool: Database) {
@@ -23,7 +23,11 @@ export function registerParties(app: FastifyInstance, pool: Database) {
       const { id } = z.object({ id: uuid }).parse(request.params);
       const row = (await pool.query(`${partySelect(table)} WHERE p.id=$1`, [id])).rows[0];
       if (!row) throw new ApiError(404, 'NOT_FOUND', 'Không tìm thấy khách hàng hoặc nhà cung cấp');
-      if (table==='customers') return { ...row,sales:[],warranties:[],payments:[] };
+      if (table==='customers') {
+        const sales=(await pool.query(`${saleSelect} WHERE s.customer_id=$1 ORDER BY s.created_at DESC,s.id`,[id])).rows;
+        const payments=(await pool.query(`${paymentSelect} JOIN sales d ON d.id=p.sale_id WHERE d.customer_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
+        return {...row,sales,payments,warranties:[]};
+      }
       const purchases = (await pool.query(`${purchaseSelect} WHERE p.supplier_id=$1 ORDER BY p.created_at DESC,p.id`,[id])).rows;
       const payments = (await pool.query(`${paymentSelect} JOIN purchases d ON d.id=p.purchase_id WHERE d.supplier_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
       return { ...row,purchases,payments };
