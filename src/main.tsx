@@ -14,3 +14,21 @@ ReactDOM.createRoot(rootElement).render(
     <App />
   </React.StrictMode>
 );
+
+// Register PWA Service Worker for app shell offline caching
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        if (reg.installing) {
+          console.log('Service Worker đang cài đặt');
+        } else if (reg.active) {
+          console.log('Service Worker đang hoạt động');
+        }
+      })
+      .catch((err) => {
+        console.warn('Không thể đăng ký Service Worker:', err);
+      });
+  });
+}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Menu, LogOut, Store, Loader2 } from 'lucide-react';
+import { Menu, LogOut, Store, Loader2, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useNetwork } from '../../context/NetworkContext';
 import type { ActiveNav } from './Sidebar';
 
 interface HeaderProps {
@@ -12,6 +13,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) => {
   const { logout } = useAuth();
   const { showError } = useToast();
+  const { isOnline } = useNetwork();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const titles: Record<ActiveNav, string> = {
@@ -19,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) =>
     sales: 'Phiếu bán & Thu nợ',
     purchases: 'Nhập hàng & Kho',
     warranties: 'Hồ sơ bảo hành',
+    cashbook: 'Sổ quỹ thu chi',
+    reports: 'Báo cáo tài chính & Tồn kho',
     products: 'Hàng hóa & Thiết bị',
     customers: 'Khách hàng',
     suppliers: 'Nhà cung cấp',
@@ -51,13 +55,32 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) =>
       </div>
 
       <div className="header-right">
+        {/* Visible Network Status Indicator */}
+        <div
+          className={`network-badge ${isOnline ? 'online' : 'offline'}`}
+          data-testid="network-status"
+          title={isOnline ? 'Hệ thống trực tuyến' : 'Hệ thống ngoại tuyến - Chỉ xem dữ liệu'}
+        >
+          {isOnline ? (
+            <>
+              <Wifi size={13} className="network-icon" />
+              <span>Trực tuyến</span>
+            </>
+          ) : (
+            <>
+              <WifiOff size={13} className="network-icon" />
+              <span>Ngoại tuyến (Chỉ xem)</span>
+            </>
+          )}
+        </div>
+
         <div className="header-store-badge">
           <Store size={14} color="#0d9488" />
           <span>Cửa hàng chính</span>
         </div>
         <button
           type="button"
-          className="btn btn-secondary btn-sm"
+          className="btn btn-secondary btn-sm header-logout-btn"
           onClick={handleLogout}
           disabled={isLoggingOut}
           title="Đăng xuất"

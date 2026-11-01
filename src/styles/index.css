@@ -278,7 +278,9 @@ button, input, select, textarea {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mobile-menu-btn {
@@ -289,19 +291,25 @@ button, input, select, textarea {
   padding: 6px;
   color: var(--slate-700);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.page-title {
+.app-header .page-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--slate-900);
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .header-store-badge {
@@ -310,6 +318,46 @@ button, input, select, textarea {
   gap: 6px;
   font-size: 12px;
   color: var(--slate-600);
+}
+
+/* Visible Network Status Indicator */
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.network-badge.online {
+  background-color: var(--emerald-50, #ecfdf5);
+  color: var(--emerald-700, #047857);
+  border: 1px solid var(--emerald-200, #a7f3d0);
+}
+
+.network-badge.offline {
+  background-color: var(--rose-50, #fff1f2);
+  color: var(--rose-700, #be123c);
+  border: 1px solid var(--rose-200, #fecdd3);
+}
+
+/* Offline Alert Banner */
+.offline-banner {
+  background-color: #fff1f2;
+  border-bottom: 1px solid #fecdd3;
+  color: #9f1239;
+  padding: 8px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+  font-weight: 500;
 }
 
 /* Content Body */
@@ -1085,6 +1133,29 @@ button, input, select, textarea {
     display: inline-flex;
   }
 
+  .app-header {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .app-header .page-title {
+    font-size: 14px;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .network-badge {
+    padding: 3px 6px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .header-logout-btn span {
+    display: none;
+  }
+
   .header-store-badge {
     display: none;
   }
@@ -1136,6 +1207,18 @@ button, input, select, textarea {
   .sale-drawer-footer-right .btn {
     flex: 1 1 auto;
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header .page-title {
+    max-width: 110px;
+    font-size: 13px;
+  }
+
+  .network-badge {
+    font-size: 10px;
+    padding: 2px 6px;
   }
 }
 

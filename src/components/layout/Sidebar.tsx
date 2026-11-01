@@ -1,8 +1,28 @@
 import React from 'react';
-import { Smartphone, Package, Users, Truck, LogOut, ShoppingCart, Receipt, ShieldCheck } from 'lucide-react';
+import {
+  Smartphone,
+  Package,
+  Users,
+  Truck,
+  LogOut,
+  ShoppingCart,
+  Receipt,
+  ShieldCheck,
+  Wallet,
+  BarChart3,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export type ActiveNav = 'purchases' | 'pos' | 'sales' | 'warranties' | 'products' | 'customers' | 'suppliers';
+export type ActiveNav =
+  | 'purchases'
+  | 'pos'
+  | 'sales'
+  | 'warranties'
+  | 'cashbook'
+  | 'reports'
+  | 'products'
+  | 'customers'
+  | 'suppliers';
 
 interface SidebarProps {
   activeNav: ActiveNav;
@@ -90,6 +110,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <ShieldCheck size={17} />
             </div>
             <span>Hồ sơ bảo hành</span>
+          </button>
+
+          <div className="nav-section-title" style={{ marginTop: 12 }}>Tài chính & Báo cáo</div>
+
+          <button
+            type="button"
+            className={`nav-item ${activeNav === 'cashbook' ? 'active' : ''}`}
+            onClick={() => handleNavClick('cashbook')}
+            aria-current={activeNav === 'cashbook' ? 'page' : undefined}
+          >
+            <div className="nav-item-icon">
+              <Wallet size={17} />
+            </div>
+            <span>Sổ quỹ thu chi</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-item ${activeNav === 'reports' ? 'active' : ''}`}
+            onClick={() => handleNavClick('reports')}
+            aria-current={activeNav === 'reports' ? 'page' : undefined}
+          >
+            <div className="nav-item-icon">
+              <BarChart3 size={17} />
+            </div>
+            <span>Báo cáo tài chính</span>
           </button>
 
           <div className="nav-section-title" style={{ marginTop: 12 }}>Danh mục & Đối tác</div>
