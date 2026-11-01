@@ -84,3 +84,15 @@ Verified 2026-11-01 against PostgreSQL using dedicated `_test` database schemas.
 Twelve added supplier-return/warranty cases verify: sold/available/returned-supplier phone boundaries; debt reduction before supplier refund and refund limited to paid amounts; split extra-cost lot costs after accessory sale→return→resale; concurrent supplier return/payment and competing returns of the final original accessory unit; same-key replay/conflict and full stock/document/cash/audit/key rollback after a forced refund failure; shop intake quarantine blocks sale, valid terminal release is audited, duplicate active records and illegal transitions fail; sold customer phones remain sold, wrong customer ownership and release fail; completed/cancelled history permits a later warranty on quarantined own stock; product-before-device warranty/sale race leaves the device sold or quarantined, never both; active sold-device warranties block sale returns/resale. Foundation suite checks unauthenticated and hostile-origin requests for both new endpoint families.
 
 No UI/E2E or runtime database migration was performed. Warranty returns, supplier purchase returns and cash/report aggregation are outside the currently implemented contract areas; SOL should independently review migration 005 and apply it only through the normal runtime migration procedure.
+
+## T-04 cashbook and reports verification
+
+Verified 2026-11-01 against the guarded local `qlchdt_test` database. The new suite checks both the configured URL and PostgreSQL `current_database()` before creating a random owned schema, then drops only that schema.
+
+- `node node_modules/typescript/bin/tsc -p server/tsconfig.json --noEmit` - exit 0.
+- `node node_modules/vitest/vitest.mjs run server/foundation.test.ts server/transactions.test.ts server/cash-reports.test.ts` - exit 0, **70/70 passed** across 3 files.
+- Cash coverage includes unauthenticated reads/writes, zero and maximum-safe VND, manual category/direction checks, audit creation, identical-key replay, payload conflict, simultaneous writes, and complete rollback after forced audit failure followed by a successful same-key retry.
+- Report coverage nets a sale return against revenue, cost and collected amounts; checks customer/supplier debt; verifies cash and bank balances reconcile receipts, supplier payments, sale refunds, supplier refunds and manual entries; and tests inclusive Ho Chi Minh date windows at exact midnight boundaries.
+- `git diff --check` - exit 0 before final docs review.
+
+No runtime database migration, UI/E2E, or frontend build was performed. SOL must independently review the SQL and accounting aggregation and rerun checks before merge.
