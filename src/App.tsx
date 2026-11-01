@@ -12,6 +12,7 @@ import { SuppliersPage } from './features/suppliers/SuppliersPage';
 import { PurchasesPage } from './features/inventory/PurchasesPage';
 import { POSPage } from './features/pos/POSPage';
 import { SalesPage } from './features/sales/SalesPage';
+import { WarrantiesPage } from './features/warranties/WarrantiesPage';
 import { Smartphone, Loader2 } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -63,6 +64,7 @@ const MainContent: React.FC = () => {
       {activeNav === 'pos' && <POSPage />}
       {activeNav === 'sales' && <SalesPage />}
       {activeNav === 'purchases' && <PurchasesPage />}
+      {activeNav === 'warranties' && <WarrantiesPage />}
       {activeNav === 'products' && <ProductsPage />}
       {activeNav === 'customers' && <CustomersPage />}
       {activeNav === 'suppliers' && <SuppliersPage />}

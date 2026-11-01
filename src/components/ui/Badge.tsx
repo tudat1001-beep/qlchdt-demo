@@ -2,7 +2,22 @@ import React from 'react';
 
 export interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'phone' | 'accessory' | 'new' | 'used' | 'available' | 'sold' | 'quarantine' | 'debt' | 'default';
+  variant?:
+    | 'phone'
+    | 'accessory'
+    | 'new'
+    | 'used'
+    | 'available'
+    | 'sold'
+    | 'quarantine'
+    | 'debt'
+    | 'default'
+    | 'received'
+    | 'processing'
+    | 'completed'
+    | 'cancelled'
+    | 'partially_returned'
+    | 'returned';
   className?: string;
 }
 

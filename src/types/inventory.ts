@@ -7,6 +7,10 @@ export interface Purchase {
   total: number;
   paid: number;
   debt: number;
+  returned_total?: number;
+  refunded?: number;
+  net_total?: number;
+  paid_net?: number;
   note: string;
   status: 'posted';
   actor: string;
@@ -68,10 +72,69 @@ export interface PurchasePayment {
   created_at: string;
 }
 
+export interface PurchaseReturnDevice {
+  id: string;
+  purchase_return_line_id: string;
+  purchase_line_id: string;
+  product_id: string;
+  device_id: string;
+  cost: number;
+}
+
+export interface PurchaseReturnAllocation {
+  id: string;
+  purchase_return_line_id: string;
+  purchase_line_id: string;
+  product_id: string;
+  lot_id: string;
+  quantity: number;
+  unit_cost: number;
+  cost: number;
+}
+
+export interface PurchaseReturnLine {
+  id: string;
+  purchase_return_id: string;
+  purchase_id: string;
+  purchase_line_id: string;
+  product_id: string;
+  position: number;
+  quantity: number;
+  value: number;
+  devices?: PurchaseReturnDevice[];
+  allocations?: PurchaseReturnAllocation[];
+}
+
+export interface PurchaseReturn {
+  id: string;
+  purchase_id: string;
+  reason: string;
+  method: 'cash' | 'bank';
+  total: number;
+  refund: number;
+  debt_reduction: number;
+  actor: string;
+  created_at: string;
+  lines: PurchaseReturnLine[];
+}
+
 export interface PurchaseDetail extends Purchase {
   lines: PurchaseLine[];
   payments: PurchasePayment[];
-  returns: unknown[];
+  returns: PurchaseReturn[];
+}
+
+export interface PurchaseReturnLineInput {
+  purchase_line_id: string;
+  quantity: number;
+  device_ids?: string[];
+}
+
+export interface PurchaseReturnInputPayload {
+  purchase_id: string;
+  reason: string;
+  method: 'cash' | 'bank';
+  lines: PurchaseReturnLineInput[];
 }
 
 export interface DeviceInput {

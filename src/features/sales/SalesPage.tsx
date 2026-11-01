@@ -162,9 +162,17 @@ export const SalesPage: React.FC = () => {
                     {formatVND(s.debt)}
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <Badge variant={s.status === 'completed' ? 'available' : 'debt'}>
-                      {s.status === 'completed' ? 'Hoàn thành' : 'Đã hủy'}
-                    </Badge>
+                    {s.status === 'posted' || s.status === 'completed' ? (
+                      <Badge variant="available">Hoàn thành</Badge>
+                    ) : s.status === 'partially_returned' ? (
+                      <Badge variant="partially_returned">Trả một phần</Badge>
+                    ) : s.status === 'returned' ? (
+                      <Badge variant="returned">Đã trả hết</Badge>
+                    ) : s.status === 'cancelled' ? (
+                      <Badge variant="cancelled">Đã hủy</Badge>
+                    ) : (
+                      <Badge variant="default">{s.status}</Badge>
+                    )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
