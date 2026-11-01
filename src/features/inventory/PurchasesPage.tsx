@@ -287,7 +287,8 @@ export const PurchasesPage: React.FC = () => {
               onAction={() => setIsPurchaseModalOpen(true)}
             />
           ) : (
-            <table className="table-misa">
+            <div className="table-responsive-wrapper">
+              <table className="table-misa">
               <thead>
                 <tr>
                   <th style={{ width: 110 }}>Mã phiếu</th>
@@ -358,6 +359,7 @@ export const PurchasesPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}
@@ -375,7 +377,8 @@ export const PurchasesPage: React.FC = () => {
               description="Các giao dịch nhập hàng và xuất bán sẽ tự động ghi sổ kho append-only tại đây."
             />
           ) : (
-            <table className="table-misa">
+            <div className="table-responsive-wrapper">
+              <table className="table-misa">
               <thead>
                 <tr>
                   <th style={{ width: 150 }}>Thời gian</th>
@@ -420,6 +423,7 @@ export const PurchasesPage: React.FC = () => {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}
@@ -437,7 +441,8 @@ export const PurchasesPage: React.FC = () => {
               description="Chưa có thiết bị nào trong kho hoặc không tìm thấy thiết bị thỏa mãn điều kiện lọc."
             />
           ) : (
-            <table className="table-misa">
+            <div className="table-responsive-wrapper">
+              <table className="table-misa">
               <thead>
                 <tr>
                   <th style={{ width: 160 }}>Số IMEI</th>
@@ -476,6 +481,7 @@ export const PurchasesPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}

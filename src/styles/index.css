@@ -544,6 +544,7 @@ button, input, select, textarea {
 .table-responsive-wrapper {
   overflow-x: auto;
   max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-misa {

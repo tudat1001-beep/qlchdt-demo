@@ -11,11 +11,16 @@ const ADMIN_PASS = process.env.ADMIN_PASSWORD || '';
 async function navigateTo(page: Page, label: string) {
   await expect(page.locator('.page-title')).toBeVisible();
   const mobileBtn = page.locator('.mobile-menu-btn');
-  if (await mobileBtn.isVisible()) {
+  const wasMobile = await mobileBtn.isVisible();
+  if (wasMobile) {
     await mobileBtn.click();
     await expect(page.locator('.app-sidebar')).toHaveClass(/sidebar-open/);
   }
   await page.click(`button.nav-item:has-text("${label}")`);
+  if (wasMobile) {
+    await expect(page.locator('.app-sidebar')).not.toHaveClass(/sidebar-open/);
+    await expect(page.locator('.sidebar-backdrop')).not.toBeVisible();
+  }
 }
 
 test.describe('Real API Foundation End-to-End Flow (Guarded _test Database)', () => {
