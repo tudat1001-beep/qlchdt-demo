@@ -76,7 +76,7 @@ test.describe('Đối tác Khách hàng & Nhà cung cấp (Parties)', () => {
 
     // Navigate to Customers via Sidebar (handles desktop & mobile)
     await navigateTo(page, 'Khách hàng');
-    await expect(page.locator('.page-title')).toHaveText('Quản lý Khách hàng');
+    await expect(page.locator('.page-title')).toHaveText('Khách hàng');
 
     // Verify row displays formatted VND debt
     await expect(page.locator('.table-misa tbody tr')).toHaveCount(1);
@@ -109,7 +109,7 @@ test.describe('Đối tác Khách hàng & Nhà cung cấp (Parties)', () => {
 
     await page.goto('/');
     await navigateTo(page, 'Nhà cung cấp');
-    await expect(page.locator('.page-title')).toHaveText('Quản lý Nhà cung cấp');
+    await expect(page.locator('.page-title')).toHaveText('Nhà cung cấp');
 
     // Check empty state
     await expect(page.locator('.empty-state-title')).toHaveText('Chưa có nhà cung cấp nào');

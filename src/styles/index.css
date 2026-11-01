@@ -304,6 +304,14 @@ button, input, select, textarea {
   gap: 12px;
 }
 
+.header-store-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--slate-600);
+}
+
 /* Content Body */
 .page-body {
   flex: 1;
@@ -1015,6 +1023,10 @@ button, input, select, textarea {
 
   .mobile-menu-btn {
     display: inline-flex;
+  }
+
+  .header-store-badge {
+    display: none;
   }
 
   .form-grid-2, .form-grid-3 {

@@ -128,7 +128,7 @@ export const ProductsPage: React.FC = () => {
       {/* Action Toolbar */}
       <div className="toolbar-card">
         <div className="toolbar-group">
-          {/* Tabs for Kind */}
+          {/* Tabs for Kind - simplified labels per UX review */}
           <div className="tabs-container" role="tablist" aria-label="Lọc theo loại hàng hóa">
             <button
               type="button"
@@ -137,7 +137,7 @@ export const ProductsPage: React.FC = () => {
               className={`tab-btn ${selectedKind === 'ALL' ? 'active' : ''}`}
               onClick={() => setSelectedKind('ALL')}
             >
-              Tất cả hàng hóa
+              Tất cả
             </button>
             <button
               type="button"
@@ -146,7 +146,7 @@ export const ProductsPage: React.FC = () => {
               className={`tab-btn ${selectedKind === 'PHONE' ? 'active' : ''}`}
               onClick={() => setSelectedKind('PHONE')}
             >
-              Điện thoại (PHONE)
+              Điện thoại
             </button>
             <button
               type="button"
@@ -155,7 +155,7 @@ export const ProductsPage: React.FC = () => {
               className={`tab-btn ${selectedKind === 'ACCESSORY' ? 'active' : ''}`}
               onClick={() => setSelectedKind('ACCESSORY')}
             >
-              Phụ kiện (ACCESSORY)
+              Phụ kiện
             </button>
           </div>
 
@@ -181,7 +181,7 @@ export const ProductsPage: React.FC = () => {
             onClick={() => handleOpenDevices()}
             icon={<Smartphone size={14} />}
           >
-            Tra cứu IMEI thiết bị
+            Tra cứu IMEI
           </Button>
 
           <Button
@@ -225,80 +225,74 @@ export const ProductsPage: React.FC = () => {
 
       {/* MISA Compact Desktop Table */}
       <div className="table-card">
-        <div className="table-responsive-wrapper">
-          <table className="table-misa" aria-label="Bảng danh mục hàng hóa">
-            <thead>
-              <tr>
-                <th
-                  style={{ width: '130px' }}
-                  className="sortable"
-                  onClick={() => handleSort('sku')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span>Mã SKU</span>
-                    <ArrowUpDown size={12} />
-                  </div>
-                </th>
-                <th
-                  className="sortable"
-                  onClick={() => handleSort('name')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span>Tên sản phẩm</span>
-                    <ArrowUpDown size={12} />
-                  </div>
-                </th>
-                <th style={{ width: '110px' }} className="col-center">Phân loại</th>
-                <th style={{ width: '130px' }}>Thương hiệu</th>
-                <th style={{ width: '140px' }}>Dòng / Thuộc tính</th>
-                <th
-                  style={{ width: '130px' }}
-                  className="col-num sortable"
-                  onClick={() => handleSort('sale_price')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                    <span>Giá bán niêm yết</span>
-                    <ArrowUpDown size={12} />
-                  </div>
-                </th>
-                <th style={{ width: '90px' }} className="col-num">Tồn t.thiểu</th>
-                <th
-                  style={{ width: '90px' }}
-                  className="col-num sortable"
-                  onClick={() => handleSort('stock_quantity')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                    <span>Tồn kho</span>
-                    <ArrowUpDown size={12} />
-                  </div>
-                </th>
-                <th style={{ width: '130px' }} className="col-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
+              <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+              <span>Đang tải danh mục hàng hóa...</span>
+            </div>
+          </div>
+        ) : sortedProducts.length === 0 ? (
+          <EmptyState
+            icon={<Layers size={28} />}
+            title="Chưa có dữ liệu hàng hóa"
+            description="Danh mục sản phẩm hiện đang trống. Hãy thêm sản phẩm điện thoại hoặc phụ kiện đầu tiên để bắt đầu."
+            actionLabel="Thêm sản phẩm mới"
+            onAction={handleCreate}
+          />
+        ) : (
+          <div className="table-responsive-wrapper">
+            <table className="table-misa" aria-label="Bảng danh mục hàng hóa">
+              <thead>
                 <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '36px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
-                      <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>Đang tải danh mục hàng hóa từ hệ thống...</span>
+                  <th
+                    style={{ width: '130px' }}
+                    className="sortable"
+                    onClick={() => handleSort('sku')}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>Mã SKU</span>
+                      <ArrowUpDown size={12} />
                     </div>
-                  </td>
+                  </th>
+                  <th
+                    className="sortable"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>Tên sản phẩm</span>
+                      <ArrowUpDown size={12} />
+                    </div>
+                  </th>
+                  <th style={{ width: '110px' }} className="col-center">Phân loại</th>
+                  <th style={{ width: '130px' }}>Thương hiệu</th>
+                  <th style={{ width: '140px' }}>Dòng / Thuộc tính</th>
+                  <th
+                    style={{ width: '130px' }}
+                    className="col-num sortable"
+                    onClick={() => handleSort('sale_price')}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span>Giá bán</span>
+                      <ArrowUpDown size={12} />
+                    </div>
+                  </th>
+                  <th style={{ width: '90px' }} className="col-num">Tồn tối thiểu</th>
+                  <th
+                    style={{ width: '90px' }}
+                    className="col-num sortable"
+                    onClick={() => handleSort('stock_quantity')}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span>Tồn kho</span>
+                      <ArrowUpDown size={12} />
+                    </div>
+                  </th>
+                  <th style={{ width: '130px' }} className="col-center">Thao tác</th>
                 </tr>
-              ) : sortedProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={9}>
-                    <EmptyState
-                      icon={<Layers size={28} />}
-                      title="Chưa có dữ liệu hàng hóa"
-                      description="Danh mục sản phẩm hiện đang trống. Hãy thêm sản phẩm điện thoại hoặc phụ kiện đầu tiên để bắt đầu."
-                      actionLabel="Thêm sản phẩm mới"
-                      onAction={handleCreate}
-                    />
-                  </td>
-                </tr>
-              ) : (
-                sortedProducts.map((prod) => {
+              </thead>
+              <tbody>
+                {sortedProducts.map((prod) => {
                   const isLowStock =
                     prod.min_stock !== null &&
                     prod.min_stock !== undefined &&
@@ -372,11 +366,11 @@ export const ProductsPage: React.FC = () => {
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* MISA Table Footer */}
         <div className="table-footer-pagination">
@@ -384,7 +378,7 @@ export const ProductsPage: React.FC = () => {
             Tổng cộng: <strong>{products.length}</strong> mặt hàng
           </span>
           <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-            Bảng dữ liệu tiêu chuẩn MISA • Phản hồi trực tiếp từ API
+            Sổ danh mục hàng hóa
           </span>
         </div>
       </div>

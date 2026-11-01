@@ -27,7 +27,7 @@ const API_BASE = '/api';
  * Standard HTTP API client configured for QLCHDT API contract.
  * - Always includes credentials for session cookies
  * - Automatically attaches Idempotency-Key UUID on mutating endpoints (POST, PATCH)
- *   while preserving the UUID across retries of the exact same payload.
+ *   while preserving the UUID across retries/reloads of the exact same payload via SHA-256 keying.
  * - Idempotency key is retained until successful response body has been fully parsed.
  * - Parses standardized error formats: { error: { code, message } }
  */
@@ -54,7 +54,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
 
   let usedIdempotencyKey: string | undefined = undefined;
   if (isMutatingMethod && !isAuthEndpoint && !skipIdempotency) {
-    usedIdempotencyKey = idempotencyKey || idempotencyManager.getOrCreateKey(method, endpoint, body);
+    usedIdempotencyKey = idempotencyKey || (await idempotencyManager.getOrCreateKey(method, endpoint, body));
     headers['Idempotency-Key'] = usedIdempotencyKey;
   }
 
@@ -77,7 +77,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
     // 204 No Content
     if (response.status === 204) {
       if (usedIdempotencyKey && isMutatingMethod && !isAuthEndpoint) {
-        idempotencyManager.invalidate(method, endpoint, body);
+        await idempotencyManager.invalidate(method, endpoint, body);
       }
       return {} as T;
     }
@@ -102,7 +102,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
 
     // Only invalidate after JSON parsing succeeds!
     if (usedIdempotencyKey && isMutatingMethod && !isAuthEndpoint) {
-      idempotencyManager.invalidate(method, endpoint, body);
+      await idempotencyManager.invalidate(method, endpoint, body);
     }
 
     return parsedResult;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/query-client';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppLayout } from './components/layout/AppLayout';
@@ -9,15 +10,6 @@ import { ProductsPage } from './features/products/ProductsPage';
 import { CustomersPage } from './features/customers/CustomersPage';
 import { SuppliersPage } from './features/suppliers/SuppliersPage';
 import { Smartphone, Loader2 } from 'lucide-react';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 const MainContent: React.FC = () => {
   const { user, isLoading } = useAuth();

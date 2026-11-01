@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit2, Eye, RefreshCw, Users } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { formatVND, formatPhone } from '../../lib/formatters';
 import { api, ApiClientError } from '../../lib/api-client';
@@ -121,42 +120,36 @@ export const CustomersPage: React.FC = () => {
 
       {/* MISA Compact Desktop Table */}
       <div className="table-card">
-        <div className="table-responsive-wrapper">
-          <table className="table-misa" aria-label="Bảng danh sách khách hàng">
-            <thead>
-              <tr>
-                <th style={{ width: '220px' }}>Họ và tên</th>
-                <th style={{ width: '140px' }}>Số điện thoại</th>
-                <th>Địa chỉ</th>
-                <th style={{ width: '150px' }} className="col-num">Công nợ hiện tại</th>
-                <th>Ghi chú</th>
-                <th style={{ width: '140px' }} className="col-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
+              <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+              <span>Đang tải danh sách khách hàng...</span>
+            </div>
+          </div>
+        ) : customers.length === 0 ? (
+          <EmptyState
+            icon={<Users size={28} />}
+            title="Chưa có khách hàng nào"
+            description="Danh sách khách hàng hiện đang trống. Hãy thêm hồ sơ khách hàng mới để quản lý công nợ và giao dịch."
+            actionLabel="Thêm khách hàng mới"
+            onAction={handleCreate}
+          />
+        ) : (
+          <div className="table-responsive-wrapper">
+            <table className="table-misa" aria-label="Bảng danh sách khách hàng">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '36px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
-                      <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>Đang tải danh sách khách hàng...</span>
-                    </div>
-                  </td>
+                  <th style={{ width: '220px' }}>Họ và tên</th>
+                  <th style={{ width: '140px' }}>Số điện thoại</th>
+                  <th>Địa chỉ</th>
+                  <th style={{ width: '150px' }} className="col-num">Công nợ hiện tại</th>
+                  <th>Ghi chú</th>
+                  <th style={{ width: '140px' }} className="col-center">Thao tác</th>
                 </tr>
-              ) : customers.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState
-                      icon={<Users size={28} />}
-                      title="Chưa có khách hàng nào"
-                      description="Danh sách khách hàng hiện đang trống. Hãy thêm hồ sơ khách hàng mới để quản lý công nợ và giao dịch."
-                      actionLabel="Thêm khách hàng mới"
-                      onAction={handleCreate}
-                    />
-                  </td>
-                </tr>
-              ) : (
-                customers.map((c) => (
+              </thead>
+              <tbody>
+                {customers.map((c) => (
                   <tr
                     key={c.id}
                     className="row-clickable"
@@ -200,18 +193,18 @@ export const CustomersPage: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="table-footer-pagination">
           <span>
             Tổng cộng: <strong>{customers.length}</strong> khách hàng
           </span>
           <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-            Hồ sơ đối tác khách hàng • Dữ liệu trực tiếp từ API
+            Sổ theo dõi khách hàng
           </span>
         </div>
       </div>

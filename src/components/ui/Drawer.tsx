@@ -24,35 +24,73 @@ export const Drawer: React.FC<DrawerProps> = ({
   const previousFocus = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      previousFocus.current = document.activeElement as HTMLElement;
+    if (!isOpen) return;
 
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          onClose();
+    previousFocus.current = document.activeElement as HTMLElement;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const getFocusableElements = (): HTMLElement[] => {
+      if (!drawerRef.current) return [];
+      const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      return Array.from(focusable).filter((el) => el.offsetParent !== null);
+    };
+
+    // Immediate initial focus to close button
+    requestAnimationFrame(() => {
+      if (drawerRef.current) {
+        const closeBtn = drawerRef.current.querySelector<HTMLElement>('button[aria-label="Đóng ngăn chi tiết"]');
+        if (closeBtn) {
+          closeBtn.focus();
+        } else {
+          const focusable = getFocusableElements();
+          if (focusable.length > 0) focusable[0].focus();
         }
-      };
+      }
+    });
 
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
 
-      // Focus close button inside drawer
-      setTimeout(() => {
-        if (drawerRef.current) {
-          const closeBtn = drawerRef.current.querySelector<HTMLElement>('button[aria-label="Đóng ngăn chi tiết"]');
-          closeBtn?.focus();
+      if (e.key === 'Tab') {
+        const focusable = getFocusableElements();
+        if (focusable.length === 0) {
+          e.preventDefault();
+          return;
         }
-      }, 50);
 
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = '';
-        if (previousFocus.current) {
-          previousFocus.current.focus();
+        const firstEl = focusable[0];
+        const lastEl = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstEl) {
+            e.preventDefault();
+            lastEl.focus();
+          }
+        } else {
+          if (document.activeElement === lastEl) {
+            e.preventDefault();
+            firstEl.focus();
+          }
         }
-      };
-    }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+      if (previousFocus.current && typeof previousFocus.current.focus === 'function') {
+        previousFocus.current.focus();
+      }
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;

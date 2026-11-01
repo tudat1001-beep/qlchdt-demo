@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit2, Eye, RefreshCw, Truck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { formatVND, formatPhone } from '../../lib/formatters';
 import { api, ApiClientError } from '../../lib/api-client';
@@ -121,42 +120,36 @@ export const SuppliersPage: React.FC = () => {
 
       {/* MISA Compact Desktop Table */}
       <div className="table-card">
-        <div className="table-responsive-wrapper">
-          <table className="table-misa" aria-label="Bảng danh sách nhà cung cấp">
-            <thead>
-              <tr>
-                <th style={{ width: '240px' }}>Tên nhà cung cấp / đại lý</th>
-                <th style={{ width: '140px' }}>Số điện thoại</th>
-                <th>Địa chỉ kho / giao dịch</th>
-                <th style={{ width: '160px' }} className="col-num">Nợ phải trả NCC</th>
-                <th>Ghi chú & chính sách</th>
-                <th style={{ width: '140px' }} className="col-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
+              <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+              <span>Đang tải danh sách nhà cung cấp...</span>
+            </div>
+          </div>
+        ) : suppliers.length === 0 ? (
+          <EmptyState
+            icon={<Truck size={28} />}
+            title="Chưa có nhà cung cấp nào"
+            description="Danh sách đối tác cung ứng hiện đang trống. Thêm nhà cung cấp để theo dõi phiếu nhập hàng và công nợ phải trả."
+            actionLabel="Thêm nhà cung cấp mới"
+            onAction={handleCreate}
+          />
+        ) : (
+          <div className="table-responsive-wrapper">
+            <table className="table-misa" aria-label="Bảng danh sách nhà cung cấp">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '36px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
-                      <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>Đang tải danh sách nhà cung cấp...</span>
-                    </div>
-                  </td>
+                  <th style={{ width: '240px' }}>Tên nhà cung cấp / đại lý</th>
+                  <th style={{ width: '140px' }}>Số điện thoại</th>
+                  <th>Địa chỉ kho / giao dịch</th>
+                  <th style={{ width: '160px' }} className="col-num">Nợ phải trả NCC</th>
+                  <th>Ghi chú & chính sách</th>
+                  <th style={{ width: '140px' }} className="col-center">Thao tác</th>
                 </tr>
-              ) : suppliers.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState
-                      icon={<Truck size={28} />}
-                      title="Chưa có nhà cung cấp nào"
-                      description="Danh sách đối tác cung ứng hiện đang trống. Thêm nhà cung cấp để theo dõi phiếu nhập hàng và công nợ phải trả."
-                      actionLabel="Thêm nhà cung cấp mới"
-                      onAction={handleCreate}
-                    />
-                  </td>
-                </tr>
-              ) : (
-                suppliers.map((s) => (
+              </thead>
+              <tbody>
+                {suppliers.map((s) => (
                   <tr
                     key={s.id}
                     className="row-clickable"
@@ -200,18 +193,18 @@ export const SuppliersPage: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="table-footer-pagination">
           <span>
             Tổng cộng: <strong>{suppliers.length}</strong> nhà cung cấp
           </span>
           <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-            Hồ sơ đối tác cung ứng • Dữ liệu trực tiếp từ API
+            Sổ theo dõi nhà cung cấp
           </span>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, LoginCredentials } from '../types/auth';
 import { api, ApiClientError } from '../lib/api-client';
+import { idempotencyManager } from '../lib/idempotency';
+import { queryClient } from '../lib/query-client';
 
 interface AuthContextValue {
   user: User | null;
@@ -20,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const me = await api.get<User>('/auth/me');
       setUser(me);
-    } catch (err) {
+    } catch {
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -39,16 +41,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    try {
-      await api.post<{ ok: boolean }>('/auth/logout', {}, {
-        skipIdempotency: true,
-      });
-    } catch (err) {
-      // Continue clearing local state even if server logout errored
-      console.warn('Logout request warning:', err);
-    } finally {
-      setUser(null);
-    }
+    // Only clear local user, query cache, and idempotency store after server confirms success!
+    // If server logout fails (e.g. 500 or network), this throws and preserves session state.
+    await api.post<{ ok: boolean }>('/auth/logout', {}, {
+      skipIdempotency: true,
+    });
+
+    queryClient.clear();
+    idempotencyManager.clear();
+    setUser(null);
   };
 
   return (

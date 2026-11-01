@@ -93,6 +93,6 @@ test.describe('Xác thực & App Shell (Auth)', () => {
     // Sidebar should now be visible
     await expect(page.locator('.app-sidebar')).toBeVisible();
     await expect(page.locator('.user-name')).toHaveText('admin');
-    await expect(page.locator('.page-title')).toHaveText('Quản lý Hàng hóa & Thiết bị');
+    await expect(page.locator('.page-title')).toHaveText('Hàng hóa & Thiết bị');
   });
 });

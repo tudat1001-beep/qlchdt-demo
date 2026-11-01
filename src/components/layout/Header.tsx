@@ -1,6 +1,7 @@
-import React from 'react';
-import { Menu, LogOut, Store } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, LogOut, Store, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import type { ActiveNav } from './Sidebar';
 
 interface HeaderProps {
@@ -9,12 +10,26 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
+  const { showError } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const titles: Record<ActiveNav, string> = {
-    products: 'Quản lý Hàng hóa & Thiết bị',
-    customers: 'Quản lý Khách hàng',
-    suppliers: 'Quản lý Nhà cung cấp',
+    products: 'Hàng hóa & Thiết bị',
+    customers: 'Khách hàng',
+    suppliers: 'Nhà cung cấp',
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Đăng xuất thất bại do lỗi kết nối máy chủ';
+      showError(msg);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -32,18 +47,23 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) =>
       </div>
 
       <div className="header-right">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px', color: '#64748b' }}>
-          <Store size={15} color="#0d9488" />
+        <div className="header-store-badge">
+          <Store size={14} color="#0d9488" />
           <span>Cửa hàng chính</span>
         </div>
         <button
           type="button"
           className="btn btn-secondary btn-sm"
-          onClick={logout}
+          onClick={handleLogout}
+          disabled={isLoggingOut}
           title="Đăng xuất"
-          aria-label="Đăng xuất"
+          aria-label="Đăng xuất khỏi hệ thống"
         >
-          <LogOut size={14} />
+          {isLoggingOut ? (
+            <Loader2 size={13} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+          ) : (
+            <LogOut size={13} />
+          )}
           <span>Đăng xuất</span>
         </button>
       </div>
