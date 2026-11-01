@@ -221,8 +221,11 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
     await expect(page.locator('.drawer-card:has-text("Lịch sử trả hàng & Hủy phiếu")')).toBeVisible();
     await expect(page.locator('.drawer-card:has-text("Khách đổi ý trả bớt 2 phụ kiện")')).toBeVisible();
 
-    // Đóng SaleDrawer để tiếp tục
-    await page.click('.drawer-card button:has-text("Đóng")');
+    // Đóng SaleDrawer để tiếp tục - xác nhận nút Đóng hiển thị và nằm trọn trong viewport
+    const closeBtn = page.locator('.drawer-card button:has-text("Đóng")');
+    await expect(closeBtn).toBeVisible();
+    await expect(closeBtn).toBeInViewport();
+    await closeBtn.click();
     await expect(page.locator('.drawer-card')).not.toBeVisible();
 
     // ==========================================

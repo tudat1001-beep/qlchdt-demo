@@ -70,14 +70,14 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
         maxWidth="820px"
         footer={
           sale && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
+            <div className="sale-drawer-footer">
+              <div className="sale-drawer-footer-left">
                 <Button type="button" variant="secondary" size="sm" onClick={handlePrint} className="no-print">
                   <Printer size={14} style={{ marginRight: 6 }} /> In hóa đơn / Lưu PDF
                 </Button>
               </div>
 
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div className="sale-drawer-footer-right">
                 {canReturnOrCancel && (
                   <>
                     <Button
