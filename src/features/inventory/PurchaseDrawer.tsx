@@ -403,10 +403,12 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                     <span>Giá trị hàng đã trả lại NCC:</span>
                     <span>-{formatVND(purchase.returned_total || 0)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--teal-900)' }}>
-                    <span>Giá trị nhập ròng thực tế:</span>
-                    <span>{formatVND(purchase.net_total ?? (purchase.total - (purchase.returned_total || 0)))}</span>
-                  </div>
+                  {purchase.net_total !== undefined && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--teal-900)' }}>
+                      <span>Giá trị nhập ròng thực tế:</span>
+                      <span>{formatVND(purchase.net_total)}</span>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -422,10 +424,10 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                 </div>
               )}
 
-              {(purchase.refunded || 0) > 0 && (
+              {purchase.paid_net !== undefined && (purchase.refunded || 0) > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--slate-700)', fontWeight: 600 }}>
                   <span>Thanh toán ròng thực tế:</span>
-                  <span>{formatVND(purchase.paid_net ?? (purchase.paid - (purchase.refunded || 0)))}</span>
+                  <span>{formatVND(purchase.paid_net)}</span>
                 </div>
               )}
 

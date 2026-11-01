@@ -305,10 +305,12 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
                     <span>Giá trị hàng đã trả lại:</span>
                     <span>-{formatVND(sale.returned_total || 0)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--teal-900)' }}>
-                    <span>Doanh thu ròng thực tế:</span>
-                    <span>{formatVND(sale.net_total ?? (sale.total - (sale.returned_total || 0)))}</span>
-                  </div>
+                  {sale.net_total !== undefined && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--teal-900)' }}>
+                      <span>Doanh thu ròng thực tế:</span>
+                      <span>{formatVND(sale.net_total)}</span>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -324,10 +326,10 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
                 </div>
               )}
 
-              {(sale.refunded || 0) > 0 && (
+              {sale.paid_net !== undefined && (sale.refunded || 0) > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--slate-700)', fontWeight: 600 }}>
                   <span>Thu ròng thực nhận:</span>
-                  <span>{formatVND(sale.paid_net ?? (sale.paid - (sale.refunded || 0)))}</span>
+                  <span>{formatVND(sale.paid_net)}</span>
                 </div>
               )}
 

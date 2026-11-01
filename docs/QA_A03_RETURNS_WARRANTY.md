@@ -21,7 +21,8 @@
   - Bắt buộc nhập lý do trả hàng (`reason`).
 - **Thẩm quyền tính toán tài chính (Server Calculation Authority):**
   - Giao diện **không tự ý tính toán lại** số tiền hoàn, nợ giảm, hay doanh thu thuần.
-  - Mọi thông số tài chính (`returned_total`, `refunded`, `net_total`, `debt`, `paid_net`) được hiển thị trực tiếp và trung thực từ dữ liệu máy chủ phản hồi sau khi gọi `POST /api/returns`.
+  - Loại bỏ hoàn toàn các biểu thức fallback tính toán client-side (`sale.net_total ?? (sale.total - sale.returned_total)`, `sale.paid_net ?? (sale.paid - sale.refunded)`, và các biểu thức tương ứng của đơn nhập).
+  - Mọi thông số tài chính (`returned_total`, `refunded`, `net_total`, `debt`, `paid_net`) được hiển thị trực tiếp và trung thực từ dữ liệu máy chủ phản hồi sau khi gọi API. Nếu trường dữ liệu chưa có, giao diện không hiển thị dòng đó thay vì tự tính toán sai lệch.
   - Hiển thị khối **"Lịch sử trả hàng"** rõ ràng trong `SaleDrawer.tsx` với đầy đủ mã phiếu trả, thời gian, số tiền hoàn, phương thức thanh toán và lý do.
 
 ### 1.2 Hủy hóa đơn bán hàng (`SaleCancelModal.tsx`)
