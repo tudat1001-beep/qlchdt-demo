@@ -7,8 +7,19 @@ export const purchaseSelect = `SELECT p.*,coalesce((SELECT sum(amount) FROM paym
   (p.total-coalesce((SELECT sum(amount) FROM payments WHERE purchase_id=p.id),0))::money_vnd AS debt FROM purchases p`;
 export const paymentSelect = `SELECT p.*,coalesce(p.purchase_id,p.sale_id) AS reference_id,
   CASE WHEN p.purchase_id IS NOT NULL THEN 'supplier' ELSE 'customer' END AS party_type FROM payments p`;
-export const saleSelect = `SELECT s.*,coalesce((SELECT sum(amount) FROM payments WHERE sale_id=s.id),0)::money_vnd AS paid,
-  (s.total-coalesce((SELECT sum(amount) FROM payments WHERE sale_id=s.id),0))::money_vnd AS debt FROM sales s`;
+export const saleSelect = `SELECT s.id,s.number,s.customer_id,s.customer_name,s.customer_snapshot,s.subtotal,s.discount,
+  s.total,s.cost,s.note,s.actor,s.created_at,p.paid::money_vnd AS paid,r.total::money_vnd AS returned_total,
+  r.cost::money_vnd AS returned_cost,r.refund::money_vnd AS refunded,
+  (s.total-r.total)::money_vnd AS net_total,(s.cost-r.cost)::money_vnd AS net_cost,
+  (p.paid-r.refund)::money_vnd AS paid_net,(s.total-p.paid-r.reduction)::money_vnd AS debt,
+  CASE WHEN r.cancelled THEN 'cancelled' WHEN NOT r.any_return THEN 'posted'
+    WHEN NOT EXISTS (SELECT 1 FROM sale_lines l WHERE l.sale_id=s.id AND l.quantity>
+      (SELECT coalesce(sum(quantity),0) FROM return_lines WHERE sale_line_id=l.id)) THEN 'returned'
+    ELSE 'partially_returned' END AS status
+  FROM sales s CROSS JOIN LATERAL (SELECT coalesce(sum(amount),0) AS paid FROM payments WHERE sale_id=s.id) p
+  CROSS JOIN LATERAL (SELECT coalesce(sum(total),0) AS total,coalesce(sum(cost),0) AS cost,
+    coalesce(sum(refund),0) AS refund,coalesce(sum(debt_reduction),0) AS reduction,
+    coalesce(bool_or(kind='cancel'),false) AS cancelled,count(*)>0 AS any_return FROM returns WHERE sale_id=s.id) r`;
 
 export async function purchaseDetail(db: Reader, id: string) {
   const document = (await db.query(`${purchaseSelect} WHERE p.id=$1`,[id])).rows[0];
@@ -38,8 +49,20 @@ export async function recordPayment(client: PoolClient, actor: string, reference
 export async function saleDetail(db:Reader,id:string) {
   const document=(await db.query(`${saleSelect} WHERE s.id=$1`,[id])).rows[0];
   if (!document) throw new ApiError(404,'NOT_FOUND','Không tìm thấy phiếu bán');
-  const lines=(await db.query('SELECT *,0::integer AS returned_quantity FROM sale_lines WHERE sale_id=$1 ORDER BY position',[id])).rows;
+  const lines=(await db.query(`SELECT l.*,(SELECT coalesce(sum(quantity),0)::bigint FROM return_lines WHERE sale_line_id=l.id) AS returned_quantity
+    FROM sale_lines l WHERE sale_id=$1 ORDER BY position`,[id])).rows;
   const allocations=(await db.query('SELECT a.* FROM sale_allocations a JOIN sale_lines l ON l.id=a.sale_line_id WHERE l.sale_id=$1 ORDER BY l.position,a.position',[id])).rows;
   const payments=(await db.query(`${paymentSelect} WHERE p.sale_id=$1 ORDER BY p.created_at,p.id`,[id])).rows;
-  return {...document,lines:lines.map(line => ({...line,allocations:allocations.filter(allocation => allocation.sale_line_id===line.id)})),payments,returns:[]};
+  const returns=(await db.query('SELECT * FROM returns WHERE sale_id=$1 ORDER BY created_at,id',[id])).rows;
+  const returnLines=(await db.query('SELECT * FROM return_lines WHERE sale_id=$1 ORDER BY position,id',[id])).rows;
+  return {...document,lines:lines.map(line => ({...line,allocations:allocations.filter(allocation => allocation.sale_line_id===line.id)})),payments,
+    returns:returns.map(document => ({...document,lines:returnLines.filter(line => line.return_id===document.id)}))};
+}
+
+export async function returnDetail(db:Reader,id:string) {
+  const document=(await db.query('SELECT * FROM returns WHERE id=$1',[id])).rows[0];
+  const lines=(await db.query('SELECT * FROM return_lines WHERE return_id=$1 ORDER BY position',[id])).rows;
+  const allocations=(await db.query(`SELECT a.* FROM return_allocations a JOIN return_lines l ON l.id=a.return_line_id
+    WHERE l.return_id=$1 ORDER BY l.position,a.id`,[id])).rows;
+  return {...document,lines:lines.map(line => ({...line,allocations:allocations.filter(allocation => allocation.return_line_id===line.id)}))};
 }
