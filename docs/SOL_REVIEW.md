@@ -1,5 +1,9 @@
 # SOL — bằng chứng kiểm duyệt độc lập
 
+## T-02 bán hàng/FIFO/công nợ
+
+Commit17eee52 đã review DDL003, sales/payment service và read models liên quan, merge a7523fc. SOL chạy lại `npm run check`: build/typecheck đạt, 50/50 tests đạt (21 foundation,21 giao dịch,3 tiền,5 UI idempotency) trong11.16s. Migration003 chạy trên database sử dụng thành công, không seed chứng từ. Đã chấp thuận backend T-02 và mở gate trả/hủy T-03a; giao diện POS A-02 đang triển khai, chưa nghiệm thu luồng nhập-bán trên UI.
+
 ## Nền giao diện A-01 — kiểm tra lại 2026-11-01
 
 Tích hợp commit ANTIGRAVITY 4ff3ace qua merge f9d857d. Đã đọc API client/idempotency, logout, luồng Playwright dùng API thật và xem screenshot mobile sau sửa. `npm run check` trên main đạt build/typecheck và 36 tests; `npm run test:e2e` đạt 27/27 trong 58.9s trên desktop/tablet/mobile, gồm luồng đăng nhập → tạo/sửa sản phẩm → khách/NCC → reload → logout trên PostgreSQL test. Những test mock riêng chỉ chứng minh UI. Gate A-01 và SOL-R1 đã resolve; A-02 đang triển khai.
