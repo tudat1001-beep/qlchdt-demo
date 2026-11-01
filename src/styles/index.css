@@ -278,7 +278,9 @@ button, input, select, textarea {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mobile-menu-btn {
@@ -289,19 +291,25 @@ button, input, select, textarea {
   padding: 6px;
   color: var(--slate-700);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.page-title {
+.app-header .page-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--slate-900);
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .header-store-badge {
@@ -1125,6 +1133,29 @@ button, input, select, textarea {
     display: inline-flex;
   }
 
+  .app-header {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .app-header .page-title {
+    font-size: 14px;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .network-badge {
+    padding: 3px 6px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .header-logout-btn span {
+    display: none;
+  }
+
   .header-store-badge {
     display: none;
   }
@@ -1176,6 +1207,18 @@ button, input, select, textarea {
   .sale-drawer-footer-right .btn {
     flex: 1 1 auto;
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header .page-title {
+    max-width: 110px;
+    font-size: 13px;
+  }
+
+  .network-badge {
+    font-size: 10px;
+    padding: 2px 6px;
   }
 }
 

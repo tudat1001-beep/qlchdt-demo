@@ -378,6 +378,12 @@ test.describe('A-03b: Real API Cashbook, Reports, XLSX Exports & PWA Verificatio
     // =========================================================================
     // 12. Kiểm tra Responsive Layouts & Chụp ảnh minh chứng
     // =========================================================================
+    // Dismiss any existing toast notifications so screenshots are clean layout evidence
+    while ((await page.locator('.toast button').count()) > 0) {
+      await page.locator('.toast button').first().click();
+      await page.waitForTimeout(100);
+    }
+
     // Desktop 1280x720 screenshot for Cashbook & Reports
     await page.setViewportSize({ width: 1280, height: 720 });
     await navigateTo(page, 'Sổ quỹ thu chi');
@@ -391,9 +397,17 @@ test.describe('A-03b: Real API Cashbook, Reports, XLSX Exports & PWA Verificatio
     await navigateTo(page, 'Sổ quỹ thu chi');
     await page.screenshot({ path: 'tests/e2e/screenshots/tablet768-cashbook.png', fullPage: false });
 
-    // Mobile 393x851 screenshot
+    // Mobile 393x851 screenshot & horizontal overflow verification
     await page.setViewportSize({ width: 393, height: 851 });
     await navigateTo(page, 'Báo cáo tài chính');
+    await expect(page.locator('.app-header .page-title')).toBeVisible();
+
+    // Verify no horizontal overflow in mobile viewport
+    const hasHorizontalOverflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > window.innerWidth;
+    });
+    expect(hasHorizontalOverflow).toBe(false);
+
     await page.screenshot({ path: 'tests/e2e/screenshots/mobile393-reports.png', fullPage: false });
 
     // Final assertion: no uncaught console errors

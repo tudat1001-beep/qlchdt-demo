@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) =>
         </div>
         <button
           type="button"
-          className="btn btn-secondary btn-sm"
+          className="btn btn-secondary btn-sm header-logout-btn"
           onClick={handleLogout}
           disabled={isLoggingOut}
           title="Đăng xuất"
