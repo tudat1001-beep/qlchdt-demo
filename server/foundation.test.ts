@@ -55,7 +55,7 @@ describe('versioned migrations and database guards', () => {
   it('serializes repeat migrations and preserves existing records', async () => {
     expect(await Promise.all([migrate(pool), migrate(pool)])).toEqual([[], []]);
     expect((await pool.query('SELECT count(*) FROM users')).rows[0].count).toBe(1);
-    expect((await pool.query('SELECT version FROM schema_migrations')).rows).toHaveLength(5);
+    expect((await pool.query('SELECT version FROM schema_migrations')).rows).toHaveLength(6);
   });
   it('rejects checksum drift rather than silently changing an applied migration', async () => {
     const {version,checksum} = (await pool.query('SELECT version,checksum FROM schema_migrations ORDER BY version')).rows[0];
