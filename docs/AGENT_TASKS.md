@@ -23,6 +23,7 @@ Task dependencies và tiêu chí chi tiết: IMPLEMENTATION_PLAN.md. Runtime IDs
 - A-01 `task_aaeaee27a92b`: commit `4ff3ace`, merge `f9d857d`; 36 unit/integration tests và 27 E2E đạt desktop/tablet/mobile.
 - T-02 `task_03fd14f2d1c8`: commit `17eee52`, merge `a7523fc`; backend nhập/FIFO/bán/thu nợ, SOL độc lập chạy 50 tests đạt.
 - A-02 `task_6000bc32d973`: commits `e5a37ac`, `c2234bc`, merge `c1166d8`; nhập hàng, kho, POS, hóa đơn, thu nợ. SOL độc lập chạy build + 66 tests và 28 E2E trên DB test đạt.
+- A-02-QA1 `task_1531bc433ba2`: commit `3f06482`, merge `4bfcdbb`; sửa chụp ảnh mobile khi sidebar còn animation, thêm cuộn ngang cho ba bảng kho, E2E guard; SOL chạy lại build + 66 tests và 28 E2E đạt, kiểm tra ảnh mobile sau merge.
 - T-03a `task_10a888efbcac`: commit `28f3d30`, merge `226f8ff`; migration004, trả/hủy bán hàng. SOL áp dụng migration và chạy build + 64 tests đạt.
 - T-03b `task_4119abfa5439`, Dispatch `ctx_73423707f405`: đang làm hoàn nhập NCC và bảo hành trong cùng worktree backend. Gate `gate_dbe60feed08e` đã resolve sau review T-03a. Chưa có commit nghiệm thu.
 - Tiếp theo: SOL review/merge T-03b; lập task riêng cho sổ quỹ/báo cáo và UI bảo hành/trả hàng/PWA/XLSX; kiểm thử lại đầy đủ trước khi gọi ứng dụng hoàn thiện.

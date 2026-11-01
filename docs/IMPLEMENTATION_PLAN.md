@@ -11,6 +11,7 @@
 | SOL-R2 | SOL | T-02,A-02 | Review invariant tài chính và đồng thời, merge khi test pass |
 | T-03a | TERRA | T-02 | Trả/hủy bán hàng; FIFO, công nợ, hoàn tồn, audit/idempotency; hoàn thành `28f3d30`, SOL đã kiểm tra migration và tests |
 | A-02 | ANTIGRAVITY | T-02 API | Nhập hàng, POS, hóa đơn, thu nợ; hoàn thành `e5a37ac` + `c2234bc`, SOL đã kiểm tra 28 E2E |
+| A-02-QA1 | ANTIGRAVITY | A-02 | Sửa trạng thái drawer/table responsive; hoàn thành `3f06482`, SOL đã kiểm tra lại 28 E2E và ảnh mobile |
 | T-03b | TERRA | T-03a | Hoàn nhập NCC và bảo hành; đang triển khai, chưa nghiệm thu |
 | T-04 | TERRA | T-03b | Sổ quỹ, báo cáo doanh thu/giá vốn/lãi, tồn kho và công nợ; test số liệu tổng hợp |
 | A-03a | ANTIGRAVITY | T-03b API | UI trả/hủy, bảo hành, hoàn nhập NCC và sổ quỹ; API thật + E2E |
