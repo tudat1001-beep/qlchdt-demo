@@ -71,3 +71,16 @@ New PostgreSQL evidence covers:
 - Invalid ownership, duplicate lines, missing keys, invalid quantities/enums/reasons fail without writes; database guards reject return history changes and cumulative line/allocation overrun. Foundation tests now cover four repeatable migrations and unauthenticated/hostile-origin return/cancel requests.
 
 No runtime database migration, frontend/browser/E2E, supplier return, warranty, cash/report module or shared money edit was performed. Those modules remain for separately dispatched work; SOL still needs independent review and integration verification before applying migration 004 to the runtime database.
+
+## T-03b supplier return and warranty verification
+
+Verified 2026-11-01 against PostgreSQL using dedicated `_test` database schemas. Each suite checks the URL and `current_database()` before schema creation and drops only its own random schema.
+
+- `node node_modules/typescript/bin/tsc -p server/tsconfig.json --noEmit` - exit 0.
+- `node node_modules/vitest/vitest.mjs run server/foundation.test.ts server/transactions.test.ts tests/money.test.ts` - exit 0, **69/69 passed**, 3 files, 13.99 seconds at 13:08:37 Asia/Saigon; this migrates a fresh owned schema through 005 and rechecks route auth/origin boundaries.
+- `npm test` - exit 0, **76/76 passed**, 4 files, 13.47 seconds at 13:09:24 Asia/Saigon, including the UI idempotency tests.
+- `git diff --check` - exit 0 before final docs and commit.
+
+Twelve added supplier-return/warranty cases verify: sold/available/returned-supplier phone boundaries; debt reduction before supplier refund and refund limited to paid amounts; split extra-cost lot costs after accessory sale→return→resale; concurrent supplier return/payment and competing returns of the final original accessory unit; same-key replay/conflict and full stock/document/cash/audit/key rollback after a forced refund failure; shop intake quarantine blocks sale, valid terminal release is audited, duplicate active records and illegal transitions fail; sold customer phones remain sold, wrong customer ownership and release fail; completed/cancelled history permits a later warranty on quarantined own stock; product-before-device warranty/sale race leaves the device sold or quarantined, never both; active sold-device warranties block sale returns/resale. Foundation suite checks unauthenticated and hostile-origin requests for both new endpoint families.
+
+No UI/E2E or runtime database migration was performed. Warranty returns, supplier purchase returns and cash/report aggregation are outside the currently implemented contract areas; SOL should independently review migration 005 and apply it only through the normal runtime migration procedure.

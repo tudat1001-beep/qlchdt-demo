@@ -35,3 +35,13 @@ export const cancelInput=z.object({reason:z.string().trim().min(1).max(4000),met
 export const returnInput=cancelInput.extend({sale_id:uuid,
   lines:z.array(z.object({sale_line_id:uuid,quantity}).strict()).min(1).max(200),
 }).strict().refine(value => new Set(value.lines.map(line => line.sale_line_id)).size===value.lines.length,'Dòng trả bị lặp');
+
+export const purchaseReturnInput=z.object({purchase_id:uuid,reason:z.string().trim().min(1).max(4000),method:z.enum(['cash','bank']),
+  lines:z.array(z.object({purchase_line_id:uuid,quantity,device_ids:z.array(uuid).max(500).optional()}).strict()).min(1).max(200),
+}).strict().superRefine((value,ctx)=>{
+  const ids=value.lines.flatMap(line=>line.device_ids??[]);
+  if(new Set(value.lines.map(line=>line.purchase_line_id)).size!==value.lines.length) ctx.addIssue({code:'custom',message:'Purchase line repeated'});
+  if(new Set(ids).size!==ids.length) ctx.addIssue({code:'custom',message:'Device repeated'});
+});
+export const warrantyCreateInput=z.object({device_id:uuid,customer_id:uuid.optional(),issue:z.string().trim().min(1).max(4000)}).strict();
+export const warrantyPatchInput=z.object({status:z.enum(['received','processing','completed','cancelled']),resolution:z.string().trim().max(4000).optional(),release_to_stock:z.boolean().optional()}).strict();

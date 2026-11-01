@@ -45,6 +45,8 @@ export function registerSales(app:FastifyInstance,pool:Database) {
       if (input.customer_id && !customer) throw new ApiError(404,'NOT_FOUND','Không tìm thấy khách hàng');
       const deviceRows=(await client.query<Device>('SELECT * FROM devices WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[deviceIds])).rows;
       const devices=new Map(deviceRows.map(device => [device.id,device]));
+      if ((await client.query("SELECT id FROM warranties WHERE device_id=ANY($1::uuid[]) AND status IN ('received','processing')",[deviceIds])).rowCount)
+        throw new ApiError(409,'ACTIVE_WARRANTY','Thiết bị đang có hồ sơ bảo hành');
       const lots=(await client.query<Lot>('SELECT * FROM accessory_lots WHERE product_id=ANY($1::uuid[]) AND remaining_quantity>0 ORDER BY created_at,id FOR UPDATE',[[...accessoryIds]])).rows;
       const plans=input.lines.map(line => {
         const device=line.device_id?devices.get(line.device_id):undefined;

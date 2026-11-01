@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { Database } from './db.js';
-import { recordPayment,saleSelect } from './documents.js';
+import { recordPayment,purchaseSelect,saleSelect } from './documents.js';
 import { ApiError } from './errors.js';
 import { audit,idempotent } from './idempotency.js';
 import { collectionInput } from './transaction-validation.js';
@@ -12,8 +12,8 @@ export function registerPayments(app:FastifyInstance,pool:Database) {
       const supplier=input.party_type==='supplier';
       const document=(await client.query(`SELECT * FROM ${supplier?'purchases':'sales'} WHERE id=$1 FOR UPDATE`,[input.reference_id])).rows[0];
       if (!document) throw new ApiError(404,'NOT_FOUND','Không tìm thấy chứng từ công nợ');
-      const paid=(await client.query(`SELECT coalesce(sum(amount),0)::money_vnd AS amount FROM payments WHERE ${supplier?'purchase_id':'sale_id'}=$1`,[document.id])).rows[0].amount as number;
-      const debt=supplier?document.total-paid:(await client.query(`${saleSelect} WHERE s.id=$1`,[document.id])).rows[0].debt;
+      const balance=(await client.query(`${supplier?purchaseSelect:saleSelect} WHERE ${supplier?'p.id':'s.id'}=$1`,[document.id])).rows[0];
+      const debt=balance.debt as number;
       if (input.amount>debt) throw new ApiError(422,'OVERPAYMENT','Số tiền vượt công nợ còn lại của chứng từ');
       const payment=await recordPayment(client,request.user!.id,document.id,input.party_type,input.method,input.amount,input.note??'',supplier?'supplier_payment':'customer_payment');
       await audit(client,request.user!.id,'collect','payment',payment.id,{reference_id:document.id,party_type:input.party_type,amount:input.amount});
