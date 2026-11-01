@@ -1,9 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright E2E configuration for QLCHDT frontend.
- * Prepared for live validation against Vite frontend (http://127.0.0.1:5173)
- * with backend proxy to http://127.0.0.1:3001.
+ * Playwright E2E configuration for QLCHDT.
+ * Uses isolated test runner (scripts/e2e-server.mjs) on http://127.0.0.1:5174
+ * backed by PostgreSQL _test database and Fastify API on 3002.
  */
 export default defineConfig({
   testDir: './tests/e2e',
@@ -13,7 +13,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: 'http://127.0.0.1:5174',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -29,9 +29,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev:web',
-    url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
+    command: 'node scripts/e2e-server.mjs',
+    url: 'http://127.0.0.1:5174',
+    reuseExistingServer: false,
     timeout: 120000,
   },
 });

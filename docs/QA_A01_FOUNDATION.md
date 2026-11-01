@@ -4,11 +4,11 @@
 - **Người giám sát:** SOL (Coordinator)
 - **Phạm vi:** Task A-01 — App Shell, Xác thực, Danh mục Hàng hóa & Thiết bị, Đối tác Khách hàng & Nhà cung cấp
 - **Thời điểm nghiệm thu:** 2026-11-01
-- **Trạng thái tích hợp:** Backend độc lập chưa merge vào nhánh hiện tại; frontend đã hoàn thành xây dựng và chuẩn bị toàn diện bộ kiểm thử Playwright bám sát `API_CONTRACT.md`.
+- **Môi trường & Model:** Gemini 3.8 Flash (Medium), Windows, Node.js 24.18.0, PostgreSQL 18 (Cluster độc lập).
 
 ---
 
-## 1. Tổng quan giao diện & Thiết kế
+## 1. Tổng quan giao diện & Trải nghiệm người dùng (UX)
 
 - **Bố cục chuẩn App Shell:**
   - Sidebar xanh Navy (`#0f172a`) với nhận diện thương hiệu QLCHDT, huy hiệu tài khoản quản lý và nút đăng xuất tức thì.
@@ -26,7 +26,7 @@
 - **Ngăn trượt chi tiết (Slide-over Drawers):**
   - Mở chi tiết khách hàng và nhà cung cấp từ cạnh phải màn hình.
   - Hiển thị công nợ nổi bật (màu đỏ cảnh báo nếu nợ > 0).
-  - Tích hợp các tab lịch sử mua/bán, chứng từ thanh toán và bảo hành liên quan.
+  - Tích hợp các tab lịch sử mua/bán, chứng từ thanh toán và bảo hành liên quan từ API thật (`GET /customers/:id`, `GET /suppliers/:id`).
   - Đóng linh hoạt bằng phím `Escape` hoặc nhấn ra vùng nền (backdrop).
 
 - **Trải nghiệm bàn phím & Trợ năng (Accessibility & Keyboard):**
@@ -65,56 +65,55 @@
 
 ---
 
-## 4. Kịch bản kiểm thử Playwright E2E đã chuẩn bị
+## 4. Kết quả kiểm thử Playwright E2E
 
-Toàn bộ test suite được lưu trong thư mục `tests/e2e/`:
+Cấu hình E2E runner: `scripts/e2e-server.mjs` tích hợp Vite 5174 và Fastify 3002 trên database PostgreSQL `_test`.
 
-1. **`tests/e2e/auth.spec.ts`**:
-   - Kiểm tra hiển thị màn hình đăng nhập chuẩn tiếng Việt khi chưa xác thực (mã 401).
-   - Kiểm tra điều hướng phím `Enter` giữa ô tài khoản và mật khẩu.
-   - Kiểm tra thông báo lỗi khi thông tin đăng nhập không hợp lệ.
-   - Kiểm tra chuyển sang giao diện quản trị với sidebar sau khi đăng nhập thành công.
-
-2. **`tests/e2e/catalog.spec.ts`**:
-   - Kiểm tra bảng MISA compact hiển thị đúng định dạng tiền VND và nhãn phân loại (Điện thoại/Phụ kiện).
-   - Kiểm tra sắp xếp cột dữ liệu.
-   - Kiểm tra mở modal thêm sản phẩm, chuyển focus bằng phím Enter và đóng bằng Escape.
-   - Kiểm tra tính bất biến của SKU và loại hàng khi mở form sửa sản phẩm.
-
-3. **`tests/e2e/parties.spec.ts`**:
-   - Kiểm tra bảng danh sách khách hàng và nhà cung cấp.
-   - Kiểm tra hiển thị công nợ nổi bật.
-   - Kiểm tra mở ngăn trượt (Drawer) chi tiết và xem các tab lịch sử giao dịch.
-   - Kiểm tra đóng Drawer bằng phím Escape.
-
----
-
-## 5. Kết quả kiểm tra Build & Typecheck
-
-Lệnh thực thi kiểm tra:
+Lệnh thực thi:
 ```sh
-npm run build
+npx playwright test
 ```
-Kết quả:
-```
-> qlchdt@1.0.0 build
-> tsc --noEmit && vite build
 
-vite v7.3.7 building client environment for production...
-transforming...
-✓ 1649 modules transformed.
-rendering chunks...
-computing gzip size...
-dist/index.html                   0.72 kB │ gzip:  0.43 kB
-dist/assets/index-txAMyzvH.css   14.92 kB │ gzip:  3.61 kB
-dist/assets/index-BS8AYNM3.js   313.12 kB │ gzip: 92.04 kB
-✓ built in 4.61s
+Kết quả thực tế:
 ```
-TypeScript biên dịch không có lỗi nào (`0 errors`). Bundle sản xuất hoàn chỉnh sẵn sàng phục vụ tĩnh từ Fastify backend hoặc Vite server.
+Running 16 tests using 1 worker
+
+  ok  1 [Desktop Chrome] › tests\e2e\auth.spec.ts:4:3 › Xác thực & App Shell (Auth) › Hiển thị màn hình đăng nhập chuẩn tiếng Việt khi chưa xác thực (813ms)
+  ok  2 [Desktop Chrome] › tests\e2e\auth.spec.ts:35:3 › Xác thực & App Shell (Auth) › Hiển thị thông báo lỗi khi đăng nhập thất bại với mã 401 (743ms)
+  ok  3 [Desktop Chrome] › tests\e2e\auth.spec.ts:63:3 › Xác thực & App Shell (Auth) › Đăng nhập thành công chuyển sang giao diện quản trị với navy sidebar (639ms)
+  ok  4 [Desktop Chrome] › tests\e2e\catalog.spec.ts:15:3 › Danh mục hàng hóa & Thiết bị (Catalog & Devices) › Hiển thị bảng MISA compact với danh mục hàng hóa và bộ lọc loại (626ms)
+  ok  5 [Desktop Chrome] › tests\e2e\catalog.spec.ts:73:3 › Danh mục hàng hóa & Thiết bị (Catalog & Devices) › Mở modal thêm sản phẩm, điều hướng phím Enter qua các trường (719ms)
+  ok  6 [Desktop Chrome] › tests\e2e\catalog.spec.ts:104:3 › Danh mục hàng hóa & Thiết bị (Catalog & Devices) › Khi sửa sản phẩm, SKU và phân loại kind bị vô hiệu hóa (immutable) (875ms)
+  ok  7 [Desktop Chrome] › tests\e2e\parties.spec.ts:32:3 › Đối tác Khách hàng & Nhà cung cấp (Parties) › Điều hướng sang Khách hàng, mở Drawer xem lịch sử và đóng bằng Escape (1.0s)
+  ok  8 [Desktop Chrome] › tests\e2e\parties.spec.ts:101:3 › Đối tác Khách hàng & Nhà cung cấp (Parties) › Điều hướng sang Nhà cung cấp và mở form thêm mới (796ms)
+  ok  9 [Mobile Chrome] › tests\e2e\auth.spec.ts:4:3 › Xác thực & App Shell (Auth) › Hiển thị màn hình đăng nhập chuẩn tiếng Việt khi chưa xác thực (968ms)
+  ok 10 [Mobile Chrome] › tests\e2e\auth.spec.ts:35:3 › Xác thực & App Shell (Auth) › Hiển thị thông báo lỗi khi đăng nhập thất bại với mã 401 (907ms)
+  ok 11 [Mobile Chrome] › tests\e2e\auth.spec.ts:63:3 › Xác thực & App Shell (Auth) › Đăng nhập thành công chuyển sang giao diện quản trị với navy sidebar (761ms)
+  ok 12 [Mobile Chrome] › tests\e2e\catalog.spec.ts:15:3 › Danh mục hàng hóa & Thiết bị (Catalog & Devices) › Hiển thị bảng MISA compact với danh mục hàng hóa và bộ lọc loại (774ms)
+  ok 13 [Mobile Chrome] › tests\e2e\catalog.spec.ts:73:3 › Danh mục hàng hóa & Thiết bị (Catalog & Devices) › Mở modal thêm sản phẩm, điều hướng phím Enter qua các trường (919ms)
+  ok 14 [Mobile Chrome] › tests\e2e\catalog.spec.ts:104:3 › Danh mục hàng hóa & Thiết bị (Catalog & Devices) › Khi sửa sản phẩm, SKU và phân loại kind bị vô hiệu hóa (immutable) (1.8s)
+  ok 15 [Mobile Chrome] › tests\e2e\parties.spec.ts:32:3 › Đối tác Khách hàng & Nhà cung cấp (Parties) › Điều hướng sang Khách hàng, mở Drawer xem lịch sử và đóng bằng Escape (1.4s)
+  ok 16 [Mobile Chrome] › tests\e2e\parties.spec.ts:101:3 › Đối tác Khách hàng & Nhà cung cấp (Parties) › Điều hướng sang Nhà cung cấp và mở form thêm mới (1.2s)
+
+  16 passed (19.5s)
+```
 
 ---
 
-## 6. Giới hạn thực tế & Ghi nhận bàn giao
+## 5. Kết quả kiểm tra Toàn diện (`npm run check`)
 
-- **Backend chưa merge:** Nhánh backend của TERRA đang chạy độc lập và chưa được SOL merge vào mã nguồn chính. Do đó, các kịch bản kiểm thử E2E hiện tại được chuẩn bị với mock bám sát `API_CONTRACT.md`. ANTIGRAVITY cam kết không báo "Live E2E passed" trước khi backend thật sẵn sàng trong đợt tích hợp SOL-R1.
-- **Phạm vi A-01:** Hoàn thành toàn diện Foundation theo đúng yêu cầu; không thêm logic tính toán kho/tiền giả ở frontend; các module tiếp theo (Bán hàng POS, Nhập kho theo lô, Đổi trả, Báo cáo) sẽ được triển khai ở các task A-02 và A-03 sau mốc SOL-R1.
+Lệnh:
+```sh
+npm run check
+```
+Bao gồm:
+1. `tsc --noEmit && vite build`: Biên dịch TypeScript và đóng gói Vite hoàn tất, không phát hiện lỗi kiểu (`0 errors`).
+2. `vitest run`: Toàn bộ 24 backend/shared tests passed 100% (`server/foundation.test.ts` 21 tests, `tests/money.test.ts` 3 tests).
+
+---
+
+## 6. Cam kết và Nghiệm thu
+
+- Toàn bộ thay đổi nằm trong phạm vi được phép của ANTIGRAVITY (`src/**`, `public/**`, `index.html`, `tests/e2e/**`, `playwright.config.ts`, `docs/QA*.md`).
+- Không chạm vào `server/**`, `shared/**`, `scripts/**` (chỉ merge từ `main` theo chỉ đạo của SOL).
+- Không tự seed dữ liệu giả vào cơ sở dữ liệu thật; tuân thủ quy tắc cô lập môi trường test.

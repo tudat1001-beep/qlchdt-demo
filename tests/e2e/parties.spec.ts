@@ -1,4 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function navigateTo(page: Page, label: string) {
+  // Wait until layout finishes initial auth check and renders
+  await expect(page.locator('.page-title')).toBeVisible();
+  const mobileBtn = page.locator('.mobile-menu-btn');
+  if (await mobileBtn.isVisible()) {
+    await mobileBtn.click();
+    await expect(page.locator('.app-sidebar')).toHaveClass(/sidebar-open/);
+  }
+  await page.click(`button.nav-item:has-text("${label}")`);
+}
 
 test.describe('Đối tác Khách hàng & Nhà cung cấp (Parties)', () => {
   test.beforeEach(async ({ page }) => {
@@ -63,8 +74,8 @@ test.describe('Đối tác Khách hàng & Nhà cung cấp (Parties)', () => {
 
     await page.goto('/');
 
-    // Navigate to Customers via Sidebar
-    await page.click('button:has-text("Khách hàng")');
+    // Navigate to Customers via Sidebar (handles desktop & mobile)
+    await navigateTo(page, 'Khách hàng');
     await expect(page.locator('.page-title')).toHaveText('Quản lý Khách hàng');
 
     // Verify row displays formatted VND debt
@@ -97,7 +108,7 @@ test.describe('Đối tác Khách hàng & Nhà cung cấp (Parties)', () => {
     });
 
     await page.goto('/');
-    await page.click('button:has-text("Nhà cung cấp")');
+    await navigateTo(page, 'Nhà cung cấp');
     await expect(page.locator('.page-title')).toHaveText('Quản lý Nhà cung cấp');
 
     // Check empty state
