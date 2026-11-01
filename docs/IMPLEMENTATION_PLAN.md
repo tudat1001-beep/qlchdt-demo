@@ -13,4 +13,6 @@
 | A-03 | ANTIGRAVITY | SOL-R2 | UI module còn lại, XLSX, print, PWA; E2E thành công/lỗi và offline |
 | SOL-R3 | SOL | T-03,A-03 | Review/merge; QA toàn app, docs vận hành, build, test, mở app thật |
 
-Mỗi task có commit riêng. SOL xem diff trước cherry-pick, kiểm tra file boundary và test sau tích hợp. Tài liệu và task log ghi đúng thực tế, không tuyên bố pass khi chưa chạy. Không deploy production.
+Mỗi task có commit riêng. SOL xem diff trước merge, kiểm tra file boundary và test sau tích hợp. Tài liệu và task log ghi đúng thực tế, không tuyên bố pass khi chưa chạy. Không deploy production.
+
+Điều phối thực tế: backend T-02 được bắt đầu sau khi riêng T-01 đã qua review gate, merge và 24 tests đạt; không phải chờ UI A-01 vì contract đã cố định và file tách biệt. SOL-R1 tổng thể chỉ hoàn tất khi A-01 được review và chạy UI thật. Chi tiết runtime và bằng chứng trong AGENT_TASKS.md.
