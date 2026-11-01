@@ -22,6 +22,8 @@ Prefix /api. JSON snake_case. IDs UUID strings. Tiền VND number nguyên an to�
 - POST /sales/:id/cancel {reason,method:'cash'|'bank',disposition:'available'|'quarantine'} → full return of remaining, status cancelled. Cannot cancel already partially returned sale unless it reverses only remaining correctly.
 - Exchange is explicit return then new sale, UI links original sale in note; do not present an unimplemented atomic exchange button.
 
+Khi tích hợp trả hàng: `total` giữ giá trị hóa đơn gốc; response bổ sung `returned_total`, `net_total`, `refunded`, `paid_net`. `paid` là tổng thu trước hoàn, `paid_net` là thu ròng sau hoàn; `debt` là nợ còn lại sau trả hàng và thanh toán. Trạng thái đọc suy ra `posted`/`partially_returned`/`returned`/`cancelled`. Không đổi âm thầm total gốc hoặc sửa snapshot dòng cũ. Frontend in hóa đơn gốc và hiển thị trả/hoàn/nợ riêng.
+
 ## Warranty/cash/report
 - GET /warranties?q= → {items:[{id,device_id,imei,customer_id,customer_name,status,issue,resolution,created_at}]}; POST /warranties {device_id,customer_id?,issue} → warranty; PATCH /warranties/:id {status:'received'|'processing'|'completed'|'cancelled',resolution?,release_to_stock?:boolean} → warranty. release only on existing quarantined shop-owned device, not customer sold device.
 - GET /cash → {items:[{id,created_at,direction:'in'|'out',method,amount,category,note,reference_id}],cash_balance,bank_balance}; POST /cash {direction,method,amount,category,note} → entry. Manual categories only other_income/expense, prevent forging sales receipts.
