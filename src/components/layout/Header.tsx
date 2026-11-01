@@ -15,6 +15,9 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) =>
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const titles: Record<ActiveNav, string> = {
+    pos: 'Bán hàng (POS)',
+    sales: 'Phiếu bán & Thu nợ',
+    purchases: 'Nhập hàng & Kho',
     products: 'Hàng hóa & Thiết bị',
     customers: 'Khách hàng',
     suppliers: 'Nhà cung cấp',
