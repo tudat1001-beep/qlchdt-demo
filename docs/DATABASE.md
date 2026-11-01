@@ -32,7 +32,7 @@ Every foundation business POST and PATCH requires `Idempotency-Key: UUID`. Keys 
 - Customer/supplier detail includes empty history arrays and debt=0 only for T-01. Accessory stock_quantity=0 until lot-based stock exists. Phone stock_quantity counts available devices. These placeholders must be replaced before transactional modules are accepted.
 - No stock/device write API or premature full-module DDL in this task. Device product-kind validation, provenance and state transitions belong to the forthcoming stock transaction module.
 
-## Planned schema for T-02 / T-03 (not migrated yet)
+## Module schema plan (T-02 implementation detailed below; T-03 pending)
 
 | Module | Planned tables and invariants |
 | --- | --- |
@@ -60,3 +60,13 @@ Extra cost is apportioned using BigInt quotient/remainder in input line/device o
 The T-01 accessory-stock/supplier-history placeholders are replaced: stock counts remaining accessory lots or available phones; supplier detail/list/patch reads actual purchase debt/history. Customers still await the sales step. Existing T-01 devices with no original purchase line remain readable; the API only creates linked devices, and sales must reject unlinked legacy devices until their provenance is reconciled.
 
 Boundaries: 200 purchase lines, 500 devices across a document, 20 payments, positive int32 quantities and safe VND fields. Each transaction has 5-second lock and 15-second statement timeouts; deadlocks/timeouts return retryable 409 `TRANSACTION_RETRY` with `Retry-After: 1`, retaining the same idempotency key. Arithmetic overflow maps to 422 `MONEY_RANGE`; malformed input maps to 400. No real database was reset or populated by tests.
+
+## T-02 sales and collections: 003_sales.sql
+
+Implemented `sales`, `sale_lines` and `sale_allocations`; payments now reference exactly one purchase or sale through actual foreign keys. Sales, lines and FIFO allocations reject UPDATE/DELETE. Each sale preserves customer name/snapshot, subtotal, discount, total and cost; lines preserve product descriptions/snapshot, IMEI, unit price, allocated discount, net total and original cost. Allocations preserve ordered lot IDs, quantities and unit costs for future reversals. No permanent unique device constraint prevents later resale; one request cannot repeat a device, and product/device locks plus available-state checks prevent simultaneous sales. Distinct devices of one product are allowed; repeated accessory product lines return 400 with an instruction to combine quantities.
+
+Locks follow idempotency key, products by UUID, devices by UUID, then available lots by created_at/id. FIFO planning validates all stock and safe gross/cost/payment totals before writes; conditional updates and lot checks also prevent negative stock. Sold phones retain their original purchase provenance. Stock movements link both original purchase lines and sale lines and expose negative sale quantity/cost with the sale as reference. Money uses SOL's checked sum/multiply/discount helpers; discount remainder goes to the first eligible lines in input order. Sales numbers use `BH-` plus a sequence, with harmless rollback gaps.
+
+Sale detail adds `subtotal,customer_snapshot`; each line includes `position,kind,product_snapshot,allocations,returned_quantity`, with returned_quantity=0 and returns=[] until T-03. Payments expose `party_type,reference_id,purchase_id,sale_id`. SOL approved these additional read fields through Orca ask; existing request fields remain unchanged. Customer debt/history now derives from sales and append-only payments; supplier history also includes later debt payments. Warranty arrays remain empty until T-03.
+
+POST `/payments` locks the referenced document before calculating its outstanding balance and writing payment, cash entry, audit and idempotency in one transaction. Concurrent different-key collections cannot overpay; same-key retries replay one result. Purchase payments are cash outflows and customer payments inflows, enforced by the database payment/cash triggers and matching method/amount foreign key. Sale debt requires a customer; combined cash/bank payments cannot exceed total. API sale limits are 200 lines and 20 payments. This migration implements no return, cancellation, warranty or reporting behavior; T-03 must add linked reversal records and subtract their debt reductions before accepting collections.

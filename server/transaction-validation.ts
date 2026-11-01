@@ -21,3 +21,11 @@ export const purchaseInput = z.object({
   if (new Set(devices.map(device => device.imei)).size!==devices.length) context.addIssue({ code:'custom', message:'IMEI bị lặp trong phiếu nhập' });
 });
 export type PurchaseInput = z.infer<typeof purchaseInput>;
+
+export const saleInput = z.object({
+  customer_id:uuid.nullable().optional(),discount:money.default(0),note,
+  payments:z.array(paymentInput).max(20),
+  lines:z.array(z.object({product_id:uuid,device_id:uuid.optional(),quantity,unit_price:money}).strict()).min(1).max(200),
+}).strict();
+export const collectionInput = z.object({party_type:z.enum(['customer','supplier']),reference_id:uuid,
+  method:z.enum(['cash','bank']),amount:money.refine(value => value>0),note}).strict();
