@@ -1,8 +1,8 @@
 import React from 'react';
-import { Smartphone, Package, Users, Truck, LogOut } from 'lucide-react';
+import { Smartphone, Package, Users, Truck, LogOut, ShoppingCart, Receipt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export type ActiveNav = 'products' | 'customers' | 'suppliers';
+export type ActiveNav = 'purchases' | 'pos' | 'sales' | 'products' | 'customers' | 'suppliers';
 
 interface SidebarProps {
   activeNav: ActiveNav;
@@ -42,7 +42,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <nav className="sidebar-nav" aria-label="Điều hướng chính">
-          <div className="nav-section-title">Danh mục & Đối tác</div>
+          <div className="nav-section-title">Giao dịch nghiệp vụ</div>
+
+          <button
+            type="button"
+            className={`nav-item ${activeNav === 'pos' ? 'active' : ''}`}
+            onClick={() => handleNavClick('pos')}
+            aria-current={activeNav === 'pos' ? 'page' : undefined}
+          >
+            <div className="nav-item-icon">
+              <ShoppingCart size={17} />
+            </div>
+            <span>Bán hàng (POS)</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-item ${activeNav === 'sales' ? 'active' : ''}`}
+            onClick={() => handleNavClick('sales')}
+            aria-current={activeNav === 'sales' ? 'page' : undefined}
+          >
+            <div className="nav-item-icon">
+              <Receipt size={17} />
+            </div>
+            <span>Phiếu bán & Thu nợ</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-item ${activeNav === 'purchases' ? 'active' : ''}`}
+            onClick={() => handleNavClick('purchases')}
+            aria-current={activeNav === 'purchases' ? 'page' : undefined}
+          >
+            <div className="nav-item-icon">
+              <Truck size={17} />
+            </div>
+            <span>Nhập hàng & Kho</span>
+          </button>
+
+          <div className="nav-section-title" style={{ marginTop: 12 }}>Danh mục & Đối tác</div>
 
           <button
             type="button"

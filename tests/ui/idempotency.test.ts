@@ -52,4 +52,37 @@ describe('IdempotencyManager & SHA-256 hashing', () => {
     const newKey = await idempotencyManager.getOrCreateKey('POST', '/suppliers', { name: 'NCC 1' });
     expect(newKey).toBeDefined();
   });
+
+  it('báo lỗi rõ ràng và chặn thao tác khi crypto.subtle không khả dụng', async () => {
+    const originalSubtle = globalThis.crypto.subtle;
+    try {
+      Object.defineProperty(globalThis.crypto, 'subtle', { value: undefined, configurable: true, writable: true });
+      await expect(computeSha256('test')).rejects.toThrow('crypto.subtle');
+    } finally {
+      Object.defineProperty(globalThis.crypto, 'subtle', { value: originalSubtle, configurable: true, writable: true });
+    }
+  });
+
+  it('báo lỗi rõ ràng và chặn thao tác khi sessionStorage bị lỗi (ngăn chặn nhận vờ an toàn)', async () => {
+    const originalSessionStorage = (globalThis as unknown as { sessionStorage?: unknown }).sessionStorage;
+    try {
+      const failingStorage = {
+        getItem: () => { throw new Error('QuotaExceeded'); },
+        setItem: () => { throw new Error('QuotaExceeded'); },
+        removeItem: () => {},
+        clear: () => {},
+        length: 0,
+        key: () => null,
+      };
+      Object.defineProperty(globalThis, 'sessionStorage', { value: failingStorage, configurable: true, writable: true });
+      await expect(idempotencyManager.getOrCreateKey('POST', '/test', { a: 1 })).rejects.toThrow('sessionStorage');
+    } finally {
+      if (originalSessionStorage !== undefined) {
+        Object.defineProperty(globalThis, 'sessionStorage', { value: originalSessionStorage, configurable: true, writable: true });
+      } else {
+        // @ts-expect-error cleanup mock
+        delete globalThis.sessionStorage;
+      }
+    }
+  });
 });

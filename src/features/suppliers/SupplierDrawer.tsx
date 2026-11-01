@@ -6,6 +6,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { formatVND, formatPhone, formatDateTime } from '../../lib/formatters';
 import { api, ApiClientError } from '../../lib/api-client';
 import type { SupplierDetail } from '../../types/parties';
+import { PaymentModal } from '../payments/PaymentModal';
 import { Truck, Phone, MapPin, FileSpreadsheet, CreditCard, RefreshCw } from 'lucide-react';
 
 interface SupplierDrawerProps {
@@ -25,6 +26,12 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'purchases' | 'payments'>('info');
+  const [payingDebt, setPayingDebt] = useState<{
+    referenceId: string;
+    referenceNumber: string;
+    partyName: string;
+    outstandingDebt: number;
+  } | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!supplierId) return;
@@ -188,6 +195,7 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                       <th className="col-num">Tổng tiền</th>
                       <th className="col-num">Đã trả</th>
                       <th className="col-num">Còn nợ</th>
+                      <th style={{ textAlign: 'center', width: 90 }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -199,6 +207,25 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                         <td className="col-money" style={{ color: '#15803d' }}>{formatVND(po.paid)}</td>
                         <td className="col-money" style={{ color: po.debt > 0 ? '#b45309' : '#15803d' }}>
                           {formatVND(po.debt)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {po.debt > 0 && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: '11px', padding: '2px 6px', color: '#0d9488' }}
+                              onClick={() => {
+                                setPayingDebt({
+                                  referenceId: po.id,
+                                  referenceNumber: po.number,
+                                  partyName: supplier.name,
+                                  outstandingDebt: po.debt,
+                                });
+                              }}
+                            >
+                              Trả nợ
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -248,6 +275,21 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {payingDebt && (
+        <PaymentModal
+          isOpen={!!payingDebt}
+          onClose={() => setPayingDebt(null)}
+          partyType="supplier"
+          referenceId={payingDebt.referenceId}
+          referenceNumber={payingDebt.referenceNumber}
+          partyName={payingDebt.partyName}
+          outstandingDebt={payingDebt.outstandingDebt}
+          onSuccess={() => {
+            fetchDetail();
+          }}
+        />
       )}
     </Drawer>
   );

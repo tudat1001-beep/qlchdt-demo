@@ -6,6 +6,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { formatVND, formatPhone, formatDateTime } from '../../lib/formatters';
 import { api, ApiClientError } from '../../lib/api-client';
 import type { CustomerDetail } from '../../types/parties';
+import { PaymentModal } from '../payments/PaymentModal';
 import { User, Phone, MapPin, Receipt, CreditCard, ShieldAlert, RefreshCw } from 'lucide-react';
 
 interface CustomerDrawerProps {
@@ -25,6 +26,12 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'sales' | 'payments' | 'warranties'>('info');
+  const [collectingPayment, setCollectingPayment] = useState<{
+    referenceId: string;
+    referenceNumber: string;
+    partyName: string;
+    outstandingDebt: number;
+  } | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!customerId) return;
@@ -194,6 +201,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                       <th>Ngày bán</th>
                       <th className="col-num">Tổng tiền</th>
                       <th className="col-num">Còn nợ</th>
+                      <th style={{ textAlign: 'center', width: 90 }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -204,6 +212,25 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                         <td className="col-money">{formatVND(sale.total)}</td>
                         <td className="col-money" style={{ color: sale.debt > 0 ? '#dc2626' : '#15803d' }}>
                           {formatVND(sale.debt)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {sale.debt > 0 && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: '11px', padding: '2px 6px', color: '#0d9488' }}
+                              onClick={() => {
+                                setCollectingPayment({
+                                  referenceId: sale.id,
+                                  referenceNumber: sale.number,
+                                  partyName: customer.name,
+                                  outstandingDebt: sale.debt,
+                                });
+                              }}
+                            >
+                              Thu nợ
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -289,6 +316,21 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {collectingPayment && (
+        <PaymentModal
+          isOpen={!!collectingPayment}
+          onClose={() => setCollectingPayment(null)}
+          partyType="customer"
+          referenceId={collectingPayment.referenceId}
+          referenceNumber={collectingPayment.referenceNumber}
+          partyName={collectingPayment.partyName}
+          outstandingDebt={collectingPayment.outstandingDebt}
+          onSuccess={() => {
+            fetchDetail();
+          }}
+        />
       )}
     </Drawer>
   );

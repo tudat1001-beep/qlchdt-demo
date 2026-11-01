@@ -12,6 +12,7 @@ export function generateUUID(): string {
 
 /**
  * Compute SHA-256 hex digest of a string to avoid storing raw PII payload in sessionStorage.
+ * Fails clearly if crypto.subtle is unavailable to guarantee cryptographic idempotency safety.
  */
 export async function computeSha256(input: string): Promise<string> {
   if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
@@ -21,12 +22,7 @@ export async function computeSha256(input: string): Promise<string> {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
-  // Simple deterministic fallback for non-crypto test runners
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
-  }
-  return `fallback-${Math.abs(hash).toString(16)}`;
+  throw new Error('Web Cryptography API (crypto.subtle) không khả dụng. Thao tác ghi bị chặn để đảm bảo an toàn chống trùng lặp.');
 }
 
 /**
@@ -35,30 +31,36 @@ export async function computeSha256(input: string): Promise<string> {
  * - Retains assigned Idempotency-Key UUID across page reloads in sessionStorage
  * - NO TTL: keys are retained until server confirms receipt and parsing succeeds,
  *   preventing duplicate financial / inventory records on uncertain reloads.
+ * - Fails clearly if sessionStorage fails, blocking write before fetch to prevent silent claim of reload-safety.
  * - Cleared upon parsed success or explicit user logout.
  */
 class IdempotencyManager {
   private inMemoryCache = new Map<string, string>();
 
   private getStorage(): Record<string, string> {
-    try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        const item = window.sessionStorage.getItem(STORAGE_KEY);
-        return item ? JSON.parse(item) : {};
-      }
-    } catch {
-      // sessionStorage might be restricted in some sandboxes
+    const storage = typeof window !== 'undefined' ? window.sessionStorage : (globalThis as unknown as { sessionStorage?: Storage }).sessionStorage;
+    if (typeof window !== 'undefined' && !storage) {
+      throw new Error('sessionStorage không khả dụng trên trình duyệt. Thao tác ghi bị chặn để ngăn trùng lặp.');
     }
-    return {};
+    if (!storage) return {};
+    try {
+      const item = storage.getItem(STORAGE_KEY);
+      return item ? JSON.parse(item) : {};
+    } catch (err) {
+      throw new Error(`Bộ nhớ phiên (sessionStorage) không thể truy cập: ${err instanceof Error ? err.message : String(err)}. Thao tác ghi bị chặn để ngăn trùng lặp.`);
+    }
   }
 
   private setStorage(record: Record<string, string>): void {
+    const storage = typeof window !== 'undefined' ? window.sessionStorage : (globalThis as unknown as { sessionStorage?: Storage }).sessionStorage;
+    if (typeof window !== 'undefined' && !storage) {
+      throw new Error('sessionStorage không khả dụng trên trình duyệt. Thao tác ghi bị chặn để ngăn trùng lặp.');
+    }
+    if (!storage) return;
     try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(record));
-      }
-    } catch {
-      // ignore storage quota / sandbox errors
+      storage.setItem(STORAGE_KEY, JSON.stringify(record));
+    } catch (err) {
+      throw new Error(`Không thể lưu khóa chống ghi trùng vào sessionStorage: ${err instanceof Error ? err.message : String(err)}. Thao tác ghi bị chặn để ngăn trùng lặp dữ liệu.`);
     }
   }
 
