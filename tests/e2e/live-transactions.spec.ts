@@ -10,11 +10,20 @@ const ADMIN_PASS = process.env.ADMIN_PASSWORD || '';
 
 async function navigateTo(page: Page, label: string) {
   const mobileBtn = page.locator('.mobile-menu-btn');
-  if (await mobileBtn.isVisible()) {
+  const wasMobile = await mobileBtn.isVisible();
+  if (wasMobile) {
     await mobileBtn.click();
     await expect(page.locator('.app-sidebar')).toHaveClass(/sidebar-open/);
   }
   await page.click(`button.nav-item:has-text("${label}")`);
+  if (wasMobile) {
+    await expect(page.locator('.app-sidebar')).not.toHaveClass(/sidebar-open/);
+    await expect(page.locator('.sidebar-backdrop')).not.toBeVisible();
+    await page.waitForFunction(() => {
+      const el = document.querySelector('.app-sidebar');
+      return !el || el.getBoundingClientRect().right <= 0;
+    });
+  }
 }
 
 test.describe('Real API Inventory, POS, Invoices & Debt End-to-End Flow (Guarded _test Database)', () => {
@@ -300,10 +309,37 @@ test.describe('Real API Inventory, POS, Invoices & Debt End-to-End Flow (Guarded
     // Tablet 768
     await page.setViewportSize({ width: 768, height: 1024 });
     await navigateTo(page, 'Nhập hàng & Kho');
+    await expect(page.locator('.app-sidebar')).not.toHaveClass(/sidebar-open/);
+    await expect(page.locator('.sidebar-backdrop')).not.toBeVisible();
+    await page.waitForFunction(() => {
+      const el = document.querySelector('.app-sidebar');
+      return !el || el.getBoundingClientRect().right <= 0;
+    });
     await page.screenshot({ path: 'tests/e2e/screenshots/tablet768-inventory.png', fullPage: true });
 
     // Mobile 390
     await page.setViewportSize({ width: 390, height: 844 });
+    // Verify mobile nav is completely closed and settled before capture
+    await expect(page.locator('.app-sidebar')).not.toHaveClass(/sidebar-open/);
+    await expect(page.locator('.sidebar-backdrop')).not.toBeVisible();
+    await page.waitForFunction(() => {
+      const el = document.querySelector('.app-sidebar');
+      return !el || el.getBoundingClientRect().right <= 0;
+    });
+
+    // Verify inventory table is horizontally scrollable without content being covered
+    const tableWrapper = page.locator('.table-responsive-wrapper').first();
+    await expect(tableWrapper).toBeVisible();
+    const isScrollable = await tableWrapper.evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(isScrollable).toBe(true);
+
+    // Verify horizontal scrolling works smoothly
+    await tableWrapper.evaluate((el) => { el.scrollLeft = 150; });
+    const scrolledLeft = await tableWrapper.evaluate((el) => el.scrollLeft);
+    expect(scrolledLeft).toBeGreaterThan(0);
+    // Reset scroll back to origin for clean screenshot capture
+    await tableWrapper.evaluate((el) => { el.scrollLeft = 0; });
+
     await page.screenshot({ path: 'tests/e2e/screenshots/mobile390-inventory.png', fullPage: true });
 
     // Verify zero fatal console errors (401 is expected before login)

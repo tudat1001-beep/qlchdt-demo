@@ -126,8 +126,22 @@ Running 28 tests using 1 worker
 ### 2.3 Hình ảnh minh chứng Responsive (Screenshots)
 Đã chụp và lưu trữ ảnh chụp màn hình tại các độ phân giải tiêu chuẩn:
 - **PC Desktop (1440px):** `tests/e2e/screenshots/pc1440-pos.png`, `tests/e2e/screenshots/pc1440-sales.png`
-- **Tablet (768px):** `tests/e2e/screenshots/tablet768-inventory.png`
-- **Mobile (390px):** `tests/e2e/screenshots/mobile390-inventory.png`
+- **Tablet (768px):** `tests/e2e/screenshots/tablet768-inventory.png` (Giao diện chuẩn khi menu mobile đã đóng)
+- **Mobile (390px):** `tests/e2e/screenshots/mobile390-inventory.png` (Trang kho hiển thị đầy đủ, không bị sidebar/backdrop che, bảng dữ liệu cuộn ngang mượt mà)
+
+### 2.4 Khắc phục & Nghiệm thu Responsive Mobile 390px / Tablet 768px (Task A-02 Follow-up)
+- **Hiện tượng phân tích:** Ảnh chụp màn hình 390px cũ có thanh sidebar navy che một phần màn hình.
+- **Nguyên nhân cốt lõi (Root Cause):**
+  1. **Hiệu ứng chuyển động (CSS Transition):** Sau khi bấm chuyển sang *Nhập hàng & Kho* ở chế độ tablet 768px, menu mobile bắt đầu co lại với `transition: transform 0.2s ease-in-out`. Test Playwright trước đó chụp màn hình ngay tức thì khi chuyển động co lại mới đi được ~32px, khiến sidebar còn dở dang trên màn hình.
+  2. **Thiếu assertion guard trong E2E:** Kịch bản test thiếu bước xác thực menu mobile đã đóng hoàn tất (`.app-sidebar` không còn class `sidebar-open`, backdrop ẩn và tọa độ rect `right <= 0`) trước khi chụp ảnh.
+  3. **Khả năng cuộn ngang của bảng kho:** Bảng dữ liệu phiếu nhập, sổ kho biến động và thiết bị IMEI trong `PurchasesPage.tsx` chưa được bọc trong container `.table-responsive-wrapper`.
+- **Biện pháp xử lý toàn diện:**
+  1. **`AppLayout.tsx`:** Bổ sung lifecycle hooks tự động đóng menu mobile khi chuyển `activeNav`, khi nhấn phím `Escape`, hoặc khi resize màn hình vượt mốc 768px.
+  2. **`PurchasesPage.tsx` & `index.css`:** Bọc tất cả 3 bảng dữ liệu kho trong `.table-responsive-wrapper` có `-webkit-overflow-scrolling: touch`, bảo đảm bảng cuộn ngang trơn tru không bị cắt cụt.
+  3. **`live-transactions.spec.ts`:**
+     - Nâng cấp hàm `navigateTo` và bước chụp ảnh: xác thực `expect(.app-sidebar).not.toHaveClass(/sidebar-open/)`, `sidebar-backdrop` không hiển thị và animation đã kết thúc hoàn toàn (`right <= 0`).
+     - Bổ sung bước kiểm thử cuộn ngang: xác minh `scrollWidth > clientWidth` và thao tác cuộn ngang hoạt động chính xác.
+  4. Cập nhật lại toàn bộ bằng chứng hình ảnh mới sạch đẹp và chuẩn xác.
 
 ---
 
