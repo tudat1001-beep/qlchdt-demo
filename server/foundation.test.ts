@@ -55,13 +55,13 @@ describe('versioned migrations and database guards', () => {
   it('serializes repeat migrations and preserves existing records', async () => {
     expect(await Promise.all([migrate(pool), migrate(pool)])).toEqual([[], []]);
     expect((await pool.query('SELECT count(*) FROM users')).rows[0].count).toBe(1);
-    expect((await pool.query('SELECT version FROM schema_migrations')).rows).toHaveLength(1);
+    expect((await pool.query('SELECT version FROM schema_migrations')).rows).toHaveLength(2);
   });
   it('rejects checksum drift rather than silently changing an applied migration', async () => {
-    const checksum = (await pool.query('SELECT checksum FROM schema_migrations')).rows[0].checksum;
-    await pool.query("UPDATE schema_migrations SET checksum='tampered'");
+    const {version,checksum} = (await pool.query('SELECT version,checksum FROM schema_migrations ORDER BY version')).rows[0];
+    await pool.query("UPDATE schema_migrations SET checksum='tampered' WHERE version=$1",[version]);
     try { await expect(migrate(pool)).rejects.toThrow('Migration checksum changed'); }
-    finally { await pool.query('UPDATE schema_migrations SET checksum=$1', [checksum]); }
+    finally { await pool.query('UPDATE schema_migrations SET checksum=$1 WHERE version=$2', [checksum,version]); }
   });
   it('bootstraps exactly one scrypt manager without resetting the existing password', async () => {
     await bootstrapManager(pool, 'another', 'another-password-123');

@@ -7,7 +7,7 @@ export function createPool(connectionString: string, options: PoolConfig = {}) {
     types: { getTypeParser(oid, format) {
       if (oid === 20) return (value: string) => {
         const number = Number(value);
-        if (!Number.isSafeInteger(number)) throw new Error('Database integer exceeds safe JSON range');
+        if (!Number.isSafeInteger(number)) throw new RangeError('Database integer exceeds safe JSON range');
         return number;
       };
       return pg.types.getTypeParser(oid, format);
@@ -22,6 +22,7 @@ export async function transaction<T>(pool: Database, work: (client: PoolClient) 
   let broken = false;
   try {
     await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='15s'");
     const result = await work(client);
     await client.query('COMMIT');
     return result;
