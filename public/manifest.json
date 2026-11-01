@@ -1,0 +1,16 @@
+{
+  "name": "QLCHDT - Quản trị Cửa hàng Điện thoại",
+  "short_name": "QLCHDT",
+  "description": "Hệ thống quản lý bán lẻ, tồn kho và công nợ điện thoại di động",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
