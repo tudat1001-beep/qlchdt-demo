@@ -17,11 +17,13 @@ Task dependencies và tiêu chí chi tiết: IMPLEMENTATION_PLAN.md. Runtime IDs
 - Không có code/graphify corpus để truy vấn trong lần khảo sát đầu.
 
 ## Runtime thực tế và kết quả
-- Orca Run `run_e88aaef69773`; SOL coordinator `term_6721979e-501d-47b4-806b-a0cae962af24`.
-- TERRA: agent codex, model quan sát từ transcript `gpt-6.1-sol` (mặc định cấu hình, high); worktree `C:/Users/My-PC/orca/workspaces/QLCHDT/terra-backend`, branch `task-t-01-baseline`. Tên vai trò TERRA không được giả là model Terra.
-- ANTIGRAVITY: agent antigravity, terminal hiển thị Gemini 3.8 Flash medium (mặc định cấu hình); worktree `C:/Users/My-PC/orca/workspaces/QLCHDT/antigravity-ui`, branch `task-a-01`.
-- T-01 `task_9c4a45de7cd5`, Dispatch `ctx_08f4a885ebb0`: worker_done succeeded, commit `25155ea`; SOL xem toàn bộ diff trong 17 file, chạy lại 21 tests rồi merge `0329dd9`. Sau merge main chạy 24 tests đạt, migration database sử dụng đạt. Không insert dữ liệu hàng hóa/khách/phiếu giả.
-- T-02 `task_03fd14f2d1c8`, Dispatch `ctx_1d7ffa652ee6`: gate `gate_432db4a46900` đã SOL resolve sau review/test T-01; tái sử dụng đúng terminal TERRA, đang triển khai nhập/kho rồi bán/thanh toán theo commit riêng. Giao diện A-01 tiếp tục độc lập theo contract đã cố định.
-- A-01 `task_aaeaee27a92b`, Dispatch `ctx_6ef296949ea6`: đang triển khai; chưa tuyên bố E2E đạt.
-- Gate tích hợp UI nền `gate_e0c40cc674bd` / task SOL-R1 `task_32f6b03c652e` còn chờ A-01 và kiểm chứng UI.
-- `npm audit` sau cập nhật static/Vitest và override glob: 0 vulnerabilities. Script check-local xác nhận hai database tách biệt, role runtime qlchdt_app không superuser/createdb/createrole.
+- Orca Run `run_e88aaef69773`; active coordinator `term_a54b26aa-d56d-4ff4-aa21-560ae7c2f472`.
+- TERRA được ánh xạ sang agent Codex trong worktree `C:/Users/My-PC/orca/workspaces/QLCHDT/terra-backend`, branch `task-t-01-baseline`. ANTIGRAVITY được ánh xạ sang agent antigravity trong worktree `C:/Users/My-PC/orca/workspaces/QLCHDT/antigravity-ui`, branch `task-a-02`. Vai trò không đồng nghĩa model ID.
+- T-01 `task_9c4a45de7cd5`: commit `25155ea`, merge `0329dd9`; SOL review diff và 21 tests. Foundation sau tích hợp: 24 tests, migration và auth API kiểm tra đạt.
+- A-01 `task_aaeaee27a92b`: commit `4ff3ace`, merge `f9d857d`; 36 unit/integration tests và 27 E2E đạt desktop/tablet/mobile.
+- T-02 `task_03fd14f2d1c8`: commit `17eee52`, merge `a7523fc`; backend nhập/FIFO/bán/thu nợ, SOL độc lập chạy 50 tests đạt.
+- A-02 `task_6000bc32d973`: commits `e5a37ac`, `c2234bc`, merge `c1166d8`; nhập hàng, kho, POS, hóa đơn, thu nợ. SOL độc lập chạy build + 66 tests và 28 E2E trên DB test đạt.
+- T-03a `task_10a888efbcac`: commit `28f3d30`, merge `226f8ff`; migration004, trả/hủy bán hàng. SOL áp dụng migration và chạy build + 64 tests đạt.
+- T-03b `task_4119abfa5439`, Dispatch `ctx_73423707f405`: đang làm hoàn nhập NCC và bảo hành trong cùng worktree backend. Gate `gate_dbe60feed08e` đã resolve sau review T-03a. Chưa có commit nghiệm thu.
+- Tiếp theo: SOL review/merge T-03b; lập task riêng cho sổ quỹ/báo cáo và UI bảo hành/trả hàng/PWA/XLSX; kiểm thử lại đầy đủ trước khi gọi ứng dụng hoàn thiện.
+- `npm audit`: 0 vulnerabilities tại lần kiểm tra gần nhất. `scripts/check-local.mjs` xác nhận hai database tách biệt và runtime role qlchdt_app không superuser/createdb/createrole. Không có dữ liệu giả được seed vào DB dùng thường.

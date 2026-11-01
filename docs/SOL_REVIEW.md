@@ -4,6 +4,12 @@
 
 Commit17eee52 đã review DDL003, sales/payment service và read models liên quan, merge a7523fc. SOL chạy lại `npm run check`: build/typecheck đạt, 50/50 tests đạt (21 foundation,21 giao dịch,3 tiền,5 UI idempotency) trong11.16s. Migration003 chạy trên database sử dụng thành công, không seed chứng từ. Đã chấp thuận backend T-02 và mở gate trả/hủy T-03a; giao diện POS A-02 đang triển khai, chưa nghiệm thu luồng nhập-bán trên UI.
 
+## T-03a và A-02 — kiểm tra lại 2026-11-01
+
+T-03a commit `28f3d30` đã review và merge. Migration004 áp dụng thành công; trả/hủy giữ nguyên chứng từ gốc, ghi phân bổ FIFO/cost, hoàn tồn và công nợ trong transaction. `npm run check` sau merge đạt build và 64 tests; bao gồm 14 test trả/hủy. A-02 commit `c2234bc` và `e5a37ac` đã review phạm vi, API integration, idempotency và báo cáo QA trước merge `c1166d8`. Build/typecheck và 66 tests đạt; E2E Playwright tích hợp chạy lại trực tiếp sau merge đạt 28/28 trong 1.3 phút, trên desktop/tablet/mobile và database `_test` tách biệt. Luồng có nhập điện thoại IMEI + phụ kiện, thanh toán hỗn hợp, bán có nợ, thu nợ, reload kiểm tra tồn kho/IMEI và in.
+
+Đã resolve gate cho T-03b. Hoàn nhập nhà cung cấp và bảo hành đang được TERRA triển khai; chưa được review/merge. Chưa kiểm chứng print/PDF trên máy in thực, dùng chức năng in/lưu PDF của trình duyệt. Build cảnh báo bundle JS khoảng744KB minified; chưa chia bundle.
+
 ## Nền giao diện A-01 — kiểm tra lại 2026-11-01
 
 Tích hợp commit ANTIGRAVITY 4ff3ace qua merge f9d857d. Đã đọc API client/idempotency, logout, luồng Playwright dùng API thật và xem screenshot mobile sau sửa. `npm run check` trên main đạt build/typecheck và 36 tests; `npm run test:e2e` đạt 27/27 trong 58.9s trên desktop/tablet/mobile, gồm luồng đăng nhập → tạo/sửa sản phẩm → khách/NCC → reload → logout trên PostgreSQL test. Những test mock riêng chỉ chứng minh UI. Gate A-01 và SOL-R1 đã resolve; A-02 đang triển khai.
