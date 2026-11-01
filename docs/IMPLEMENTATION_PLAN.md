@@ -17,7 +17,7 @@
 | T-05 | SOL | T-04 | E2E login rate limit riêng trong guarded test server; hoàn thành `d71348e`, merge `05e2994`; mặc định vẫn 5 lần/15 phút |
 | A-03a | ANTIGRAVITY | T-03b API | UI trả/hủy, bảo hành, hoàn nhập NCC; hoàn thành `a24f9e6` + `ef3b4e9`, merge `5ba3814`; responsive E2E đã kiểm tra |
 | A-03b | ANTIGRAVITY | T-04 API | Sổ quỹ/báo cáo, XLSX, PWA online-first; hoàn thành `86ce76b` + `e5339a5`, merge `bd0caaa`; desktop/tablet/mobile E2E |
-| SOL-R3 | SOL | T-03b,T-04,A-03a,A-03b | Đang hoàn tất review, test tích hợp và tài liệu vận hành; không deploy production |
+| SOL-R3 | SOL | T-03b,T-04,A-03a,A-03b | Hoàn thành review/merge, `npm run check` (81 tests), full E2E (34 tests), tài liệu QA và kiểm tra runtime local; không deploy production. Còn cảnh báo bundle JS 1.26 MB |
 
 Mỗi task có commit riêng. SOL xem diff trước merge, kiểm tra file boundary và test sau tích hợp. Tài liệu và task log ghi đúng thực tế, không tuyên bố pass khi chưa chạy. Không deploy production.
 
