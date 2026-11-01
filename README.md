@@ -12,7 +12,7 @@ npm run db:setup
 npm run dev
 ```
 
-Mở http://127.0.0.1:5173. Tên đăng nhập và mật khẩu được sinh ở `.local/credentials.txt`; cấu hình riêng tại `.env`, không commit/chia sẻ hai file này. Migration khởi tạo tài khoản lần đầu, thay ADMIN_PASSWORD sau đó không tự đổi mật khẩu trong database.
+Mở http://127.0.0.1:5175. Tên đăng nhập và mật khẩu được sinh ở `.local/credentials.txt`; cấu hình riêng tại `.env`, không commit/chia sẻ hai file này. Migration khởi tạo tài khoản lần đầu, thay ADMIN_PASSWORD sau đó không tự đổi mật khẩu trong database.
 
 ```powershell
 npm run build

@@ -32,9 +32,9 @@ if (action === 'setup') {
       `DATABASE_URL=postgresql://qlchdt:${password}@127.0.0.1:${port}/qlchdt`,
       `TEST_DATABASE_URL=postgresql://qlchdt:${password}@127.0.0.1:${port}/qlchdt_test`,
       'ADMIN_USERNAME=admin', `ADMIN_PASSWORD=${adminPassword}`, 'PORT=3001',
-      'HOST=127.0.0.1', 'APP_ORIGIN=http://127.0.0.1:5173', 'NODE_ENV=development', '',
+      'HOST=127.0.0.1', 'APP_ORIGIN=http://127.0.0.1:5175', 'NODE_ENV=development', '',
     ].join('\n'), { mode: 0o600 });
-    writeFileSync(join(local, 'credentials.txt'), `QLCHDT — tài khoản quản lý local\nĐăng nhập: admin\nMật khẩu: ${adminPassword}\nURL: http://127.0.0.1:5173\nGiữ file này riêng tư.\n`, { mode: 0o600 });
+    writeFileSync(join(local, 'credentials.txt'), `QLCHDT — tài khoản quản lý local\nĐăng nhập: admin\nMật khẩu: ${adminPassword}\nURL: http://127.0.0.1:5175\nGiữ file này riêng tư.\n`, { mode: 0o600 });
     dotenv.config({ path: join(root, '.env'), override: true, quiet: true });
   }
   const url = new URL(process.env.DATABASE_URL);
