@@ -13,6 +13,9 @@ import { PurchasesPage } from './features/inventory/PurchasesPage';
 import { POSPage } from './features/pos/POSPage';
 import { SalesPage } from './features/sales/SalesPage';
 import { WarrantiesPage } from './features/warranties/WarrantiesPage';
+import { CashbookPage } from './features/cashbook/CashbookPage';
+import { ReportsPage } from './features/reports/ReportsPage';
+import { NetworkProvider } from './context/NetworkContext';
 import { Smartphone, Loader2 } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -65,6 +68,8 @@ const MainContent: React.FC = () => {
       {activeNav === 'sales' && <SalesPage />}
       {activeNav === 'purchases' && <PurchasesPage />}
       {activeNav === 'warranties' && <WarrantiesPage />}
+      {activeNav === 'cashbook' && <CashbookPage />}
+      {activeNav === 'reports' && <ReportsPage />}
       {activeNav === 'products' && <ProductsPage />}
       {activeNav === 'customers' && <CustomersPage />}
       {activeNav === 'suppliers' && <SuppliersPage />}
@@ -76,9 +81,11 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <AuthProvider>
-          <MainContent />
-        </AuthProvider>
+        <NetworkProvider>
+          <AuthProvider>
+            <MainContent />
+          </AuthProvider>
+        </NetworkProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

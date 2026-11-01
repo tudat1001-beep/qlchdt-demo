@@ -312,6 +312,46 @@ button, input, select, textarea {
   color: var(--slate-600);
 }
 
+/* Visible Network Status Indicator */
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.network-badge.online {
+  background-color: var(--emerald-50, #ecfdf5);
+  color: var(--emerald-700, #047857);
+  border: 1px solid var(--emerald-200, #a7f3d0);
+}
+
+.network-badge.offline {
+  background-color: var(--rose-50, #fff1f2);
+  color: var(--rose-700, #be123c);
+  border: 1px solid var(--rose-200, #fecdd3);
+}
+
+/* Offline Alert Banner */
+.offline-banner {
+  background-color: #fff1f2;
+  border-bottom: 1px solid #fecdd3;
+  color: #9f1239;
+  padding: 8px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+  font-weight: 500;
+}
+
 /* Content Body */
 .page-body {
   flex: 1;
