@@ -415,6 +415,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
             disabled={mutation.isPending}
           />
           <Input
+            id="purchase-extra-cost"
             label="Chi phí mua hàng phát sinh (VND)"
             type="number"
             min={0}
@@ -497,6 +498,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                         });
                       }}
                       placeholder="0"
+                      data-testid={`unit-cost-${lineIndex}`}
                       required
                       disabled={mutation.isPending}
                     />
@@ -524,6 +526,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                         <input
                           type="number"
                           min={1}
+                          data-testid={`accessory-qty-${lineIndex}`}
                           value={line.quantity}
                           onChange={(e) => {
                             const val = Math.max(1, parseInt(e.target.value || '1', 10));
@@ -723,6 +726,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Input
+                id="purchase-cash"
                 label="Tiền mặt (VND)"
                 type="number"
                 min={0}
@@ -732,6 +736,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 disabled={mutation.isPending}
               />
               <Input
+                id="purchase-bank"
                 label="Chuyển khoản (VND)"
                 type="number"
                 min={0}

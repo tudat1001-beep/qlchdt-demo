@@ -1045,3 +1045,71 @@ button, input, select, textarea {
     max-width: 100%;
   }
 }
+
+/* ==========================================================================
+   Vietnamese Invoice Print Styling (@media print)
+   Supports clean browser Save as PDF and physical receipt printing
+   ========================================================================== */
+@media print {
+  /* Hide non-printable app UI elements */
+  .app-sidebar,
+  .app-header,
+  .mobile-menu-btn,
+  .no-print,
+  .btn,
+  button,
+  .toast-container,
+  .drawer-backdrop,
+  .drawer-header {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+    font-size: 12pt;
+  }
+
+  .app-main,
+  .drawer-overlay,
+  .drawer-card,
+  .drawer-body,
+  .page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .printable-invoice {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 10mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border-color: #333333 !important;
+  }
+
+  /* Prevent page breaks inside critical invoice elements */
+  .printable-invoice table,
+  .printable-invoice tr {
+    page-break-inside: avoid;
+  }
+}

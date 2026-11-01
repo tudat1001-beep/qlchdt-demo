@@ -10,6 +10,8 @@ import { ProductsPage } from './features/products/ProductsPage';
 import { CustomersPage } from './features/customers/CustomersPage';
 import { SuppliersPage } from './features/suppliers/SuppliersPage';
 import { PurchasesPage } from './features/inventory/PurchasesPage';
+import { POSPage } from './features/pos/POSPage';
+import { SalesPage } from './features/sales/SalesPage';
 import { Smartphone, Loader2 } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -58,6 +60,8 @@ const MainContent: React.FC = () => {
 
   return (
     <AppLayout activeNav={activeNav} onNavigate={setActiveNav}>
+      {activeNav === 'pos' && <POSPage />}
+      {activeNav === 'sales' && <SalesPage />}
       {activeNav === 'purchases' && <PurchasesPage />}
       {activeNav === 'products' && <ProductsPage />}
       {activeNav === 'customers' && <CustomersPage />}
