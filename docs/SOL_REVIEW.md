@@ -1,5 +1,13 @@
 # SOL — bằng chứng kiểm duyệt độc lập
 
+## Nền giao diện A-01 — kiểm tra lại 2026-11-01
+
+Tích hợp commit ANTIGRAVITY 4ff3ace qua merge f9d857d. Đã đọc API client/idempotency, logout, luồng Playwright dùng API thật và xem screenshot mobile sau sửa. `npm run check` trên main đạt build/typecheck và 36 tests; `npm run test:e2e` đạt 27/27 trong 58.9s trên desktop/tablet/mobile, gồm luồng đăng nhập → tạo/sửa sản phẩm → khách/NCC → reload → logout trên PostgreSQL test. Những test mock riêng chỉ chứng minh UI. Gate A-01 và SOL-R1 đã resolve; A-02 đang triển khai.
+
+PostgreSQL riêng đã dừng giữa phiên và được khởi động lại; lỗi ECONNREFUSED ban đầu là lỗi môi trường, kiểm tra lại sau khởi động đạt. T-02 cũ dừng do provider usage limit (terminal thể hiện rõ), đã fence Dispatch cũ và tiếp tục đúng task/worktree bằng Dispatch mới ctx_692dac4e8dfe, bảo toàn mọi file chưa commit. ANTIGRAVITY A-02 Dispatch ctx_8c9fe016e6a5. Chưa nghiệm thu sales hoặc giao diện nhập/POS tại mốc này.
+
+Local app dùng cổng 5175 vì 5173 thuộc dự án khác đang chạy; không tắt server dự án đó. API3001 và web5175 đã kiểm HTTP thành công. Build còn cảnh báo bundle JS590KB, chưa tối ưu chia bundle. PWA mới có manifest nền, chưa hoàn tất service worker/cài đặt.
+
 ## Nền backend T-01
 
 Ngày 2026-11-01, commit TERRA 25155ea, merge 0329dd9. Đã xem diff 17 file, schema/constraints/index, auth/session/origin/rate limiter, migration checksum/advisory lock, validation, SQL parameter binding, transaction cleanup, idempotency và test. Không sửa UI/CRUD đã giao worker.
