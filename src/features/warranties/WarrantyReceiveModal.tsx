@@ -147,7 +147,7 @@ export const WarrantyReceiveModal: React.FC<WarrantyReceiveModalProps> = ({
         </div>
       }
     >
-      <form id="warranty-receive-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form id="warranty-receive-form" noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {errorMessage && (
           <div
             className="alert alert-danger"

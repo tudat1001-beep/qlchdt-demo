@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onOpenMobileNav }) =>
     pos: 'Bán hàng (POS)',
     sales: 'Phiếu bán & Thu nợ',
     purchases: 'Nhập hàng & Kho',
-    warranties: 'Bảo hành & Sửa chữa',
+    warranties: 'Hồ sơ bảo hành',
     products: 'Hàng hóa & Thiết bị',
     customers: 'Khách hàng',
     suppliers: 'Nhà cung cấp',

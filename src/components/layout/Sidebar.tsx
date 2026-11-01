@@ -89,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="nav-item-icon">
               <ShieldCheck size={17} />
             </div>
-            <span>Bảo hành & Sửa chữa</span>
+            <span>Hồ sơ bảo hành</span>
           </button>
 
           <div className="nav-section-title" style={{ marginTop: 12 }}>Danh mục & Đối tác</div>

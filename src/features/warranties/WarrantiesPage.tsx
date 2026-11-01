@@ -72,9 +72,9 @@ export const WarrantiesPage: React.FC = () => {
       {/* Header trang */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Hồ sơ bảo hành & Sửa chữa</h1>
+          <h1 className="page-title">Hồ sơ bảo hành</h1>
           <p className="page-subtitle">
-            Tiếp nhận bảo hành, theo dõi tiến độ sửa chữa thiết bị khách hàng và cách ly tồn kho
+            Tiếp nhận bảo hành, theo dõi tiến độ xử lý thiết bị khách hàng và cách ly tồn kho
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>

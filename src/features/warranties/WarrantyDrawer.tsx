@@ -327,7 +327,7 @@ export const WarrantyDrawer: React.FC<WarrantyDrawerProps> = ({
             </div>
           }
         >
-          <form id="warranty-transition-form" onSubmit={handleConfirmTransition} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form id="warranty-transition-form" noValidate onSubmit={handleConfirmTransition} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {errorMessage && (
               <div
                 className="alert alert-danger"

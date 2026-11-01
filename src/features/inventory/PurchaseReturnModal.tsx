@@ -157,7 +157,7 @@ export const PurchaseReturnModal: React.FC<PurchaseReturnModalProps> = ({
         </div>
       }
     >
-      <form id="purchase-return-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <form id="purchase-return-form" noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {errorMessage && (
           <div
             className="alert alert-danger"

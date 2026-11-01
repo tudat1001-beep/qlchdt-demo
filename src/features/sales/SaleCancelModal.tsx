@@ -100,7 +100,7 @@ export const SaleCancelModal: React.FC<SaleCancelModalProps> = ({
         </div>
       }
     >
-      <form id="sale-cancel-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form id="sale-cancel-form" noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {errorMessage && (
           <div
             className="alert alert-danger"

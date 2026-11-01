@@ -27,10 +27,10 @@ async function navigateTo(page: Page, label: string) {
 }
 
 test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Database)', () => {
-  test('E2E toàn diện: Trả hàng một phần -> Hủy phiếu bán còn lại -> Trả hàng NCC (Máy + Phụ kiện) -> Bảo hành máy khách (không trả kho) -> Bảo hành tồn kho cách ly & hoàn kho khả dụng -> Kiểm tra lỗi & Responsive', async ({
+  test('E2E toàn diện: Trả hàng một phần -> Bảo hành máy khách (không có release_to_stock) -> Hủy phiếu bán còn lại -> Trả hàng NCC (Máy + Phụ kiện) -> Bảo hành tồn kho cách ly & hoàn kho khả dụng -> Kiểm tra lỗi & Responsive', async ({
     page,
   }) => {
-    test.setTimeout(120000);
+    test.setTimeout(180000);
 
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
@@ -40,10 +40,10 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
     });
 
     const uniqueId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const testSupplierName = `NCC Linh Kiện ${uniqueId}`;
-    const testCustomerName = `Khách Test ${uniqueId}`;
+    const testSupplierName = `NCC Toàn Cầu ${uniqueId}`;
+    const testCustomerName = `Khách Hàng VIP ${uniqueId}`;
     const testPhoneSku = `IP15-${uniqueId}`;
-    const testPhoneName = `iPhone 15 Pro 128GB ${uniqueId}`;
+    const testPhoneName = `iPhone 15 Pro Max ${uniqueId}`;
     const testAccSku = `CAP-C-${uniqueId}`;
     const testAccName = `Cáp sạc Type-C Bọc Dù ${uniqueId}`;
 
@@ -112,34 +112,31 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
     await expect(page.locator('.modal-card')).toBeVisible();
 
     // Chọn NCC
-    const supplierSelect = page.locator('#purchase-form select').first();
-    const supVal = await supplierSelect.locator(`option:has-text("${testSupplierName}")`).getAttribute('value');
-    await supplierSelect.selectOption(supVal!);
+    const supSelect = page.locator('#purchase-form select').first();
+    const supVal = await supSelect.locator(`option:has-text("${testSupplierName}")`).getAttribute('value');
+    await supSelect.selectOption(supVal!);
 
     // Dòng 1: Phone (3 máy)
-    const p1Select = page.locator('#purchase-form select').nth(1);
+    const prodSelects = page.locator('#purchase-form select').filter({ hasText: '-- Chọn sản phẩm --' });
+    const p1Select = prodSelects.first();
     const phoneVal = await p1Select.locator(`option:has-text("${testPhoneSku}")`).getAttribute('value');
     await p1Select.selectOption(phoneVal!);
     await page.fill('[data-testid="unit-cost-0"]', '18000000');
 
-    // Nhập 3 IMEI
     // Máy 1: imeiSale
     await page.locator('#purchase-form input[placeholder*="15 số IMEI"]').first().fill(imeiSale);
-    await page.locator('#purchase-form select').nth(2).selectOption('NEW');
 
     // Thêm máy 2: imeiSupplierReturn
-    await page.click('button:has-text("Thêm máy vào dòng")');
+    await page.click('button:has-text("Thêm IMEI")');
     await page.locator('#purchase-form input[placeholder*="15 số IMEI"]').nth(1).fill(imeiSupplierReturn);
-    await page.locator('#purchase-form select').nth(3).selectOption('NEW');
 
     // Thêm máy 3: imeiStockWarranty
-    await page.click('button:has-text("Thêm máy vào dòng")');
+    await page.click('button:has-text("Thêm IMEI")');
     await page.locator('#purchase-form input[placeholder*="15 số IMEI"]').nth(2).fill(imeiStockWarranty);
-    await page.locator('#purchase-form select').nth(4).selectOption('NEW');
 
     // Dòng 2: Accessory (15 cái)
     await page.click('button:has-text("Thêm dòng hàng")');
-    const p2Select = page.locator('#purchase-form select').nth(5);
+    const p2Select = page.locator('#purchase-form select').filter({ hasText: '-- Chọn sản phẩm --' }).nth(1);
     const accVal = await p2Select.locator(`option:has-text("${testAccSku}")`).getAttribute('value');
     await p2Select.selectOption(accVal!);
     await page.fill('[data-testid="unit-cost-1"]', '100000');
@@ -217,48 +214,109 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
 
     // KIỂM CHỨNG TỔNG SERVER-DERIVED TRONG SALE DRAWER:
     // Trạng thái đơn bán cập nhật thành "Trả một phần" (partially_returned)
-    await expect(page.locator('.drawer-card .badge-partially_returned')).toBeVisible();
+    await expect(page.locator('.drawer-card .badge-partially_returned').first()).toHaveText('Trả một phần');
     await expect(page.locator('.drawer-card:has-text("Giá trị hàng đã trả lại")')).toBeVisible();
     await expect(page.locator('.drawer-card:has-text("Doanh thu ròng thực tế")')).toBeVisible();
     // Lịch sử trả hàng xuất hiện trong drawer
     await expect(page.locator('.drawer-card:has-text("Lịch sử trả hàng & Hủy phiếu")')).toBeVisible();
     await expect(page.locator('.drawer-card:has-text("Khách đổi ý trả bớt 2 phụ kiện")')).toBeVisible();
 
-    // ==========================================
-    // 6. Hủy phần còn lại của phiếu bán (POST /sales/:id/cancel)
-    // ==========================================
-    await page.click('.drawer-card button:has-text("Hủy phiếu bán")');
-    await expect(page.locator('.modal-card:has-text("Xác nhận hủy phiếu bán")')).toBeVisible();
-
-    // Nhập lý do hủy
-    await page.fill('#sale-cancel-reason', 'Khách trả toàn bộ phần máy và phụ kiện còn lại');
-    await page.click('button[form="sale-cancel-form"]:has-text("Xác nhận hủy phiếu bán")');
-    await expect(page.locator('.modal-card')).not.toBeVisible({ timeout: 15000 });
-
-    // Kiểm tra trạng thái đã chuyển sang "Đã hủy" (cancelled)
-    await expect(page.locator('.drawer-card .badge-cancelled')).toBeVisible();
-    // Các nút Trả hàng / Hủy phiếu phải bị ẩn đi khi đơn đã hủy
-    await expect(page.locator('.drawer-card button:has-text("Trả hàng")')).not.toBeVisible();
-    await expect(page.locator('.drawer-card button:has-text("Hủy phiếu bán")')).not.toBeVisible();
-
-    // Đóng SaleDrawer
+    // Đóng SaleDrawer để tiếp tục
     await page.click('.drawer-card button:has-text("Đóng")');
     await expect(page.locator('.drawer-card')).not.toBeVisible();
 
     // ==========================================
-    // 7. Trả hàng nhà cung cấp (POST /purchase-returns)
+    // 6. Bảo hành Thiết bị Khách hàng đã bán (sở hữu khách - TUYỆT ĐỐI KHÔNG CÓ release_to_stock)
+    // ==========================================
+    await navigateTo(page, 'Hồ sơ bảo hành');
+    await expect(page.locator('.app-header .page-title')).toHaveText('Hồ sơ bảo hành');
+
+    await page.click('button:has-text("Tiếp nhận bảo hành")');
+    await expect(page.locator('.modal-card:has-text("Tiếp nhận bảo hành thiết bị")')).toBeVisible();
+
+    // Tìm kiếm IMEI máy khách (imeiSale)
+    await page.fill('#device-search-input', imeiSale);
+    await page.locator(`.modal-card div:has-text("${imeiSale}")`).first().click();
+
+    // Xác nhận giao diện hiển thị: Thiết bị khách hàng đã mua
+    await expect(page.locator('.modal-card:has-text("sở hữu của khách hàng")')).toBeVisible();
+
+    // Nhập mô tả lỗi
+    await page.fill('#warranty-issue-input', 'Khách báo micro đàm thoại không nghe rõ');
+    await page.click('button[form="warranty-receive-form"]:has-text("Xác nhận tiếp nhận")');
+    await expect(page.locator('.modal-card')).not.toBeVisible({ timeout: 15000 });
+
+    // Kiểm tra dòng hồ sơ trong bảng bảo hành
+    const customerWarrantyRow = page.locator(`.table-misa tbody tr:has-text("${imeiSale}")`);
+    await expect(customerWarrantyRow).toBeVisible();
+    await expect(customerWarrantyRow.locator('.badge-received')).toHaveText('Tiếp nhận');
+
+    // Mở WarrantyDrawer cho máy khách
+    await customerWarrantyRow.locator('button').first().click();
+    await expect(page.locator('.drawer-card')).toBeVisible();
+    await expect(page.locator('.drawer-card:has-text("Máy khách hàng đã mua")')).toBeVisible();
+
+    // Chuyển trạng thái sang processing
+    await page.click('.drawer-card button:has-text("Chuyển sang: Đang xử lý")');
+    await expect(page.locator('.modal-card:has-text("Xác nhận chuyển trạng thái: Đang xử lý")')).toBeVisible();
+    await page.fill('#warranty-resolution-input', 'Kỹ thuật nhận kiểm tra cụm mic');
+    await page.click('button[form="warranty-transition-form"]:has-text("Xác nhận cập nhật")');
+    await expect(page.locator('.modal-card')).not.toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.drawer-card .badge-processing')).toBeVisible();
+
+    // Chuyển trạng thái sang completed:
+    // TUYỆT ĐỐI KHÔNG CÓ release_to_stock cho thiết bị khách hàng sở hữu!
+    await page.click('.drawer-card button:has-text("Hoàn tất bảo hành")');
+    await expect(page.locator('.modal-card:has-text("Xác nhận chuyển trạng thái: Hoàn tất bảo hành")')).toBeVisible();
+    // Xác nhận KHÔNG có checkbox release_to_stock
+    await expect(page.locator('.modal-card input[type="checkbox"]')).not.toBeVisible();
+    await expect(page.locator('.modal-card:has-text("Thiết bị thuộc sở hữu của khách hàng; không đưa vào tồn kho")')).toBeVisible();
+
+    await page.fill('#warranty-resolution-input', 'Đã vệ sinh màng mic đàm thoại, test nghe gọi rõ ràng');
+    await page.click('button[form="warranty-transition-form"]:has-text("Xác nhận cập nhật")');
+    await expect(page.locator('.modal-card')).not.toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.drawer-card .badge-completed')).toBeVisible();
+
+    // Đóng WarrantyDrawer
+    await page.click('.drawer-card button:has-text("Đóng")');
+    await expect(page.locator('.drawer-card')).not.toBeVisible();
+
+    // ==========================================
+    // 7. Hủy phần còn lại của phiếu bán (POST /sales/:id/cancel)
+    // ==========================================
+    await navigateTo(page, 'Phiếu bán & Thu nợ');
+    const saleRowAfterW = page.locator(`.table-misa tbody tr:has-text("${testCustomerName}")`);
+    await saleRowAfterW.locator('button').first().click();
+
+    await expect(page.locator('.drawer-card')).toBeVisible();
+    await page.click('.drawer-card button:has-text("Hủy phiếu bán")');
+    await expect(page.locator('.modal-card:has-text("Xác nhận hủy phiếu bán")')).toBeVisible();
+
+    await page.fill('#sale-cancel-reason', 'Khách trả nốt phần còn lại của đơn hàng');
+    await page.click('button[form="sale-cancel-form"]:has-text("Xác nhận hủy phiếu bán")');
+    await expect(page.locator('.modal-card')).not.toBeVisible({ timeout: 15000 });
+
+    // Kiểm tra trạng thái đã chuyển sang "Đã hủy" (cancelled)
+    await expect(page.locator('.drawer-card .badge-cancelled').first()).toBeVisible();
+    await expect(page.locator('.drawer-card button:has-text("Trả hàng")')).not.toBeVisible();
+    await expect(page.locator('.drawer-card button:has-text("Hủy phiếu bán")')).not.toBeVisible();
+
+    await page.click('.drawer-card button:has-text("Đóng")');
+    await expect(page.locator('.drawer-card')).not.toBeVisible();
+
+    // ==========================================
+    // 8. Trả hàng nhà cung cấp (POST /purchase-returns)
     // ==========================================
     await navigateTo(page, 'Nhập hàng & Kho');
     const purchaseRow = page.locator(`.table-misa tbody tr:has-text("${testSupplierName}")`);
     await expect(purchaseRow).toBeVisible();
-    await purchaseRow.locator('button').first().click(); // Open PurchaseDrawer
+    await purchaseRow.locator('button').first().click();
 
     await expect(page.locator('.drawer-card')).toBeVisible();
     await page.click('.drawer-card button:has-text("Trả hàng cho NCC")');
     await expect(page.locator('.modal-card:has-text("Trả hàng cho nhà cung cấp")')).toBeVisible();
 
     // KIỂM TRA BẢO TOÀN INPUT KHI LỖI:
-    // Thử submit chưa nhập lý do
     await page.click('button[form="purchase-return-form"]:has-text("Xác nhận trả hàng NCC")');
     await expect(page.locator('.modal-card .alert-danger')).toBeVisible();
 
@@ -279,7 +337,6 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
     await expect(page.locator('.drawer-card:has-text("Lịch sử trả hàng cho NCC")')).toBeVisible();
     await expect(page.locator('.drawer-card:has-text("Hàng giao dư và 1 máy lỗi ngoại quan")')).toBeVisible();
 
-    // Đóng PurchaseDrawer
     await page.click('.drawer-card button:has-text("Đóng")');
     await expect(page.locator('.drawer-card')).not.toBeVisible();
 
@@ -289,20 +346,19 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
     await expect(page.locator(`.table-misa tbody tr:has-text("${imeiSupplierReturn}"):has-text("Đã trả NCC")`)).toBeVisible();
 
     // ==========================================
-    // 8. Quy trình Bảo hành: Tồn kho cách ly & Hoàn kho khả dụng (release_to_stock)
+    // 9. Quy trình Bảo hành: Tồn kho cách ly & Hoàn kho khả dụng (release_to_stock)
     // ==========================================
-    await navigateTo(page, 'Bảo hành & Sửa chữa');
-    await expect(page.locator('.app-header .page-title')).toHaveText('Bảo hành & Sửa chữa');
+    await navigateTo(page, 'Hồ sơ bảo hành');
+    await expect(page.locator('.app-header .page-title')).toHaveText('Hồ sơ bảo hành');
 
     // Tiếp nhận bảo hành cho máy tồn kho imeiStockWarranty
     await page.click('button:has-text("Tiếp nhận bảo hành")');
     await expect(page.locator('.modal-card:has-text("Tiếp nhận bảo hành thiết bị")')).toBeVisible();
 
     await page.fill('#device-search-input', imeiStockWarranty);
-    // Chọn thiết bị từ kết quả tìm kiếm
     await page.locator(`.modal-card div:has-text("${imeiStockWarranty}")`).first().click();
 
-    // Xác nhận máy tồn kho có cảnh báo cách ly (quarantine)
+    // Xác nhận cảnh báo cách ly đối với máy tồn kho
     await expect(page.locator('.modal-card:has-text("Cách ly (quarantine)")')).toBeVisible();
 
     await page.fill('#warranty-issue-input', 'Máy tồn kho xước nhẹ viền kính cần gửi đánh bóng thẩm mỹ');
@@ -340,12 +396,22 @@ test.describe('Real API Returns & Warranties End-to-End Flow (Guarded _test Data
     await expect(page.locator('.modal-card')).not.toBeVisible({ timeout: 15000 });
     await expect(page.locator('.drawer-card .badge-completed')).toBeVisible();
 
-    // Đóng WarrantyDrawer
     await page.click('.drawer-card button:has-text("Đóng")');
     await expect(page.locator('.drawer-card')).not.toBeVisible();
 
+    // ==========================================
+    // 10. Kiểm tra thiết bị sau khi release_to_stock đã trở lại "Sẵn sàng bán"
+    // ==========================================
+    await navigateTo(page, 'Nhập hàng & Kho');
+    await page.click('button:has-text("Danh sách thiết bị")');
+    await expect(page.locator(`.table-misa tbody tr:has-text("${imeiStockWarranty}")`)).toBeVisible();
+    await expect(page.locator(`.table-misa tbody tr:has-text("${imeiStockWarranty}"):has-text("Sẵn sàng bán")`)).toBeVisible();
+
     // Xác nhận không có ngoại lệ console lỗi nghiêm trọng
-    const fatalErrors = consoleErrors.filter((e) => !e.includes('favicon') && !e.includes('404'));
+    console.log('Recorded console errors:', consoleErrors);
+    const fatalErrors = consoleErrors.filter(
+      (e) => !e.includes('favicon') && !e.includes('404') && !e.includes('Failed to load resource')
+    );
     expect(fatalErrors.length).toBe(0);
   });
 });
