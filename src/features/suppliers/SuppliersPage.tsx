@@ -12,7 +12,13 @@ export const SuppliersPage: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   // Modals & Drawers
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,8 +30,8 @@ export const SuppliersPage: React.FC = () => {
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (searchQuery.trim()) {
-        params.set('q', searchQuery.trim());
+      if (debouncedSearchQuery.trim()) {
+        params.set('q', debouncedSearchQuery.trim());
       }
       const qs = params.toString() ? `?${params.toString()}` : '';
       const response = await api.get<{ items: Supplier[] }>(`/suppliers${qs}`);
@@ -40,7 +46,7 @@ export const SuppliersPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   useEffect(() => {
     fetchSuppliers();
@@ -120,7 +126,7 @@ export const SuppliersPage: React.FC = () => {
 
       {/* MISA Compact Desktop Table */}
       <div className="table-card">
-        {isLoading ? (
+        {isLoading && suppliers.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
               <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />

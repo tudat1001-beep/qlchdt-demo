@@ -4,15 +4,11 @@
  * NEVER caches or queues API mutations, and never claims offline financial writes succeeded.
  */
 
-const CACHE_NAME = 'qlchdt-shell-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',
-  '/icon-192.svg',
-  '/icon-512.svg',
-];
+const CACHE_NAME = 'qlchdt-shell-v3';
+const APP_SCOPE = new URL(self.registration.scope);
+const APP_ROOT = APP_SCOPE.pathname;
+const STATIC_ASSETS = ['', 'index.html', 'manifest.json', 'favicon.svg', 'icon-192.svg', 'icon-512.svg']
+  .map((path) => new URL(path, APP_SCOPE).href);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -45,6 +41,16 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api') || event.request.method !== 'GET') {
     // Pass straight to network without caching or queuing.
     // If the client is offline, the browser's fetch will naturally fail with a network error.
+    return;
+  }
+
+  if (url.pathname === APP_ROOT || url.pathname === new URL('index.html', APP_SCOPE).pathname) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
     return;
   }
 

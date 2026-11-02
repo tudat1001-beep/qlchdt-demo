@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar, type ActiveNav } from './Sidebar';
 import { Header } from './Header';
 import { useNetwork } from '../../context/NetworkContext';
-import { WifiOff } from 'lucide-react';
+import { BarChart3, Ellipsis, Package, Receipt, ShoppingCart, WifiOff } from 'lucide-react';
+
+const quickNav = [
+  { key: 'pos', label: 'Bán hàng', icon: ShoppingCart },
+  { key: 'sales', label: 'Hóa đơn', icon: Receipt },
+  { key: 'purchases', label: 'Nhập kho', icon: Package },
+  { key: 'reports', label: 'Báo cáo', icon: BarChart3 },
+] as const;
 
 interface AppLayoutProps {
   activeNav: ActiveNav;
@@ -60,6 +67,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           activeNav={activeNav}
           onOpenMobileNav={() => setIsMobileNavOpen(true)}
         />
+        {import.meta.env.VITE_DEMO_MODE === 'true' && (
+          <div className="demo-mode-banner" role="status">
+            <strong>Bản demo · Chỉ xem</strong>
+            <span>Dữ liệu hoàn toàn mẫu; thay đổi và giao dịch không được lưu.</span>
+          </div>
+        )}
         {!isOnline && (
           <div className="offline-banner" role="alert" data-testid="offline-alert-banner">
             <WifiOff size={16} />
@@ -71,6 +84,30 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <div className="page-body">
           {children}
         </div>
+        <nav className="mobile-bottom-nav" aria-label="Điều hướng nhanh">
+          {quickNav.map(({ key, label, icon: Icon }) => (
+            <button
+              type="button"
+              key={key}
+              className={`mobile-bottom-nav-item ${activeNav === key ? 'active' : ''}`}
+              aria-current={activeNav === key ? 'page' : undefined}
+              onClick={() => onNavigate(key)}
+            >
+              <Icon size={19} aria-hidden="true" />
+              <span>{label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`mobile-bottom-nav-item ${isMobileNavOpen ? 'active' : ''}`}
+            aria-label="Mở các chức năng khác"
+            aria-expanded={isMobileNavOpen}
+            onClick={() => setIsMobileNavOpen(true)}
+          >
+            <Ellipsis size={20} aria-hidden="true" />
+            <span>Khác</span>
+          </button>
+        </nav>
       </main>
     </div>
   );

@@ -78,7 +78,7 @@ export const SalesPage: React.FC = () => {
       </div>
 
       {/* Filter / Search Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+      <div className="page-filter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ position: 'relative', width: 340 }}>
           <Search
             size={16}
@@ -114,6 +114,7 @@ export const SalesPage: React.FC = () => {
             description={searchQuery ? 'Không tìm thấy hóa đơn phù hợp từ khóa' : 'Hãy thực hiện bán hàng tại màn hình POS để tạo hóa đơn đầu tiên.'}
           />
         ) : (
+          <div className="table-responsive-wrapper sales-table">
           <table className="table-misa">
             <thead>
               <tr>
@@ -201,6 +202,7 @@ export const SalesPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

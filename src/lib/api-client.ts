@@ -34,6 +34,10 @@ const API_BASE = '/api';
 export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers: customHeaders, skipIdempotency, idempotencyKey, ...restOptions } = options;
   const method = (restOptions.method || 'GET').toUpperCase();
+  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+    const { demoFetch } = await import('./demo-api');
+    return demoFetch<T>(endpoint, method, body);
+  }
   const url = endpoint.startsWith('/') ? `${API_BASE}${endpoint}` : `${API_BASE}/${endpoint}`;
 
   const headers: Record<string, string> = {

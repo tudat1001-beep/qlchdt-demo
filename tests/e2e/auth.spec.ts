@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+test.use({ serviceWorkers: 'block' });
+
 test.describe('Xác thực & App Shell (Auth)', () => {
   test('Hiển thị màn hình đăng nhập chuẩn tiếng Việt khi chưa xác thực', async ({ page }) => {
     // Intercept /api/auth/me to simulate unauthenticated visitor
@@ -94,5 +96,25 @@ test.describe('Xác thực & App Shell (Auth)', () => {
     await expect(page.locator('.app-sidebar')).toBeVisible();
     await expect(page.locator('.user-name')).toHaveText('admin');
     await expect(page.locator('.page-title')).toHaveText('Hàng hóa & Thiết bị');
+  });
+
+  test('Hiện hướng dẫn tải lại nếu màn hình sau đăng nhập không tải được', async ({ page }) => {
+    await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, contentType: 'application/json', body: '{}' }));
+    await page.route('**/api/auth/login', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'user-001', username: 'admin' }) }));
+    await page.route('**/api/products*', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [] }) }));
+    let pageChunkBlocked = false;
+    await page.route(/ProductsPage\.tsx/, (route) => {
+      pageChunkBlocked = true;
+      return route.abort();
+    });
+
+    await page.goto('/');
+    await page.fill('#login-username', 'admin');
+    await page.fill('#login-password', 'correct-pass');
+    await page.locator('button[type="submit"]').click();
+
+    await expect.poll(() => pageChunkBlocked).toBe(true);
+    await expect(page.getByRole('alert')).toContainText('Không tải được màn hình này');
+    await expect(page.getByRole('button', { name: 'Tải lại ứng dụng' })).toBeVisible();
   });
 });

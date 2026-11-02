@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Drawer } from '../../components/ui/Drawer';
 import { Badge } from '../../components/ui/Badge';
@@ -24,6 +24,11 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [devicePages, setDevicePages] = useState<Record<string, number>>({});
+  const [paymentPage, setPaymentPage] = useState(1);
+  const paymentPageSize = 8;
+
+  useEffect(() => setPaymentPage(1), [purchaseId, isOpen]);
 
   const { data: purchase, isLoading, isError, refetch } = useQuery<PurchaseDetail>({
     queryKey: ['purchases', purchaseId],
@@ -204,11 +209,11 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
 
                     {/* Thiết bị điện thoại kèm theo */}
                     {line.kind === 'PHONE' && line.devices && line.devices.length > 0 && (
-                      <div style={{ borderTop: '1px solid var(--slate-200)', padding: '8px 12px', backgroundColor: '#ffffff', overflowX: 'auto' }}>
+                      <div style={{ borderTop: '1px solid var(--slate-200)', padding: '8px 12px', backgroundColor: '#ffffff' }}>
                         <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--slate-700)', marginBottom: 6 }}>
                           Danh sách máy ({line.devices.length}):
                         </div>
-                        <table style={{ width: '100%', fontSize: '11.5px', borderCollapse: 'collapse', minWidth: '480px' }}>
+                        <table className="purchase-device-table" style={{ width: '100%', fontSize: '11.5px', borderCollapse: 'collapse' }}>
                           <thead>
                             <tr style={{ color: 'var(--slate-500)', borderBottom: '1px solid var(--slate-200)' }}>
                               <th style={{ textAlign: 'left', padding: '4px 0' }}>IMEI</th>
@@ -220,28 +225,41 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                             </tr>
                           </thead>
                           <tbody>
-                            {line.devices.map((dev) => (
+                            {line.devices.slice(((devicePages[line.id] || 1) - 1) * 8, (devicePages[line.id] || 1) * 8).map((dev) => (
                               <tr key={dev.id} style={{ borderBottom: '1px dashed var(--slate-100)' }}>
-                                <td style={{ padding: '4px 0', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{dev.imei}</td>
-                                <td style={{ padding: '4px 0', textAlign: 'center' }}>
+                                <td data-label="IMEI" style={{ padding: '4px 0', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{dev.imei}</td>
+                                <td data-label="Tình trạng" style={{ padding: '4px 0', textAlign: 'center' }}>
                                   <Badge variant={dev.condition === 'NEW' ? 'new' : 'used'}>
                                     {dev.condition === 'NEW' ? 'Mới' : 'Cũ'}
                                   </Badge>
                                 </td>
-                                <td style={{ padding: '4px 0', textAlign: 'center' }}>
+                                <td data-label="Trạng thái kho" style={{ padding: '4px 0', textAlign: 'center' }}>
                                   <Badge variant={dev.status === 'available' ? 'available' : dev.status === 'returned_supplier' ? 'debt' : dev.status === 'quarantine' ? 'quarantine' : 'sold'}>
                                     {dev.status === 'available' ? 'Khả dụng' : dev.status === 'returned_supplier' ? 'Đã trả NCC' : dev.status === 'quarantine' ? 'Cách ly' : 'Đã bán'}
                                   </Badge>
                                 </td>
-                                <td style={{ padding: '4px 0', textAlign: 'center' }}>{dev.battery !== null ? `${dev.battery}%` : '—'}</td>
-                                <td style={{ padding: '4px 0', color: 'var(--slate-600)' }}>
+                                <td data-label="Pin" style={{ padding: '4px 0', textAlign: 'center' }}>{dev.battery !== null ? `${dev.battery}%` : '—'}</td>
+                                <td data-label="Ngoại hình / lỗi" style={{ padding: '4px 0', color: 'var(--slate-600)' }}>
                                   {[dev.cosmetic, dev.defects].filter(Boolean).join(' - ') || '—'}
                                 </td>
-                                <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>{formatVND(dev.cost)}</td>
+                                <td data-label="Giá vốn" style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>{formatVND(dev.cost)}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                        {line.devices.length > 8 && (() => {
+                          const page = devicePages[line.id] || 1;
+                          const pages = Math.ceil(line.devices.length / 8);
+                          return (
+                            <div className="compact-pagination" aria-label="Phân trang thiết bị trong phiếu nhập">
+                              <span>{line.devices.length} máy · Trang {page} / {pages}</span>
+                              <div>
+                                <Button type="button" variant="secondary" size="sm" disabled={page === 1} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page - 1 }))}>Trước</Button>
+                                <Button type="button" variant="secondary" size="sm" disabled={page === pages} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page + 1 }))}>Sau</Button>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
@@ -272,7 +290,8 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                   Chưa có ghi nhận thanh toán nào (Ghi nợ 100%).
                 </div>
               ) : (
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                <>
+                <table className="popup-table" style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ color: 'var(--slate-500)', borderBottom: '1px solid var(--slate-200)' }}>
                       <th style={{ textAlign: 'left', padding: '6px 0' }}>Thời gian</th>
@@ -282,24 +301,34 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {purchase.payments.map((p) => (
+                    {purchase.payments.slice((paymentPage - 1) * paymentPageSize, paymentPage * paymentPageSize).map((p) => (
                       <tr key={p.id} style={{ borderBottom: '1px solid var(--slate-100)' }}>
-                        <td style={{ padding: '6px 0', color: 'var(--slate-600)' }}>{formatDateTime(p.created_at)}</td>
-                        <td style={{ padding: '6px 0' }}>
+                        <td data-label="Thời gian" style={{ padding: '6px 0', color: 'var(--slate-600)' }}>{formatDateTime(p.created_at)}</td>
+                        <td data-label="Phương thức" style={{ padding: '6px 0' }}>
                           <Badge variant="default">
                             {p.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
                           </Badge>
                         </td>
-                        <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: 'var(--success-700)' }}>
+                        <td data-label="Số tiền" style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: 'var(--success-700)' }}>
                           {formatVND(p.amount)}
                         </td>
-                        <td style={{ padding: '6px 0', paddingLeft: 10, color: 'var(--slate-500)' }}>
+                        <td data-label="Ghi chú" style={{ padding: '6px 0', paddingLeft: 10, color: 'var(--slate-500)' }}>
                           {p.note || '—'}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {purchase.payments.length > paymentPageSize && (
+                  <div className="compact-pagination" aria-label="Phân trang lịch sử thanh toán">
+                    <span>{purchase.payments.length} giao dịch · Trang {paymentPage} / {Math.ceil(purchase.payments.length / paymentPageSize)}</span>
+                    <div>
+                      <Button type="button" variant="secondary" size="sm" disabled={paymentPage <= 1} onClick={() => setPaymentPage((page) => page - 1)}>Trước</Button>
+                      <Button type="button" variant="secondary" size="sm" disabled={paymentPage >= Math.ceil(purchase.payments.length / paymentPageSize)} onClick={() => setPaymentPage((page) => page + 1)}>Sau</Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </div>
 

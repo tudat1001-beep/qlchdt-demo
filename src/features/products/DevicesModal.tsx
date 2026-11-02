@@ -26,6 +26,7 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDevices = useCallback(async () => {
@@ -52,8 +53,13 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
     }
   }, [productId, searchQuery, statusFilter]);
 
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(devices.length / pageSize));
+  const visibleDevices = devices.slice((page - 1) * pageSize, page * pageSize);
+
   useEffect(() => {
     if (isOpen) {
+      setPage(1);
       fetchDevices();
     }
   }, [isOpen, fetchDevices]);
@@ -95,7 +101,7 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
               style={{ width: '100%' }}
               placeholder="Tìm kiếm theo số IMEI (15 chữ số)..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -109,7 +115,7 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
             className="select-field"
             style={{ width: '180px' }}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           >
             <option value="">Tất cả trạng thái</option>
             <option value="available">Sẵn sàng (available)</option>
@@ -137,17 +143,17 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
         )}
 
         <div className="table-card">
-          <div className="table-responsive-wrapper" style={{ maxHeight: '400px' }}>
-            <table className="table-misa">
+          <div className="table-responsive-wrapper devices-modal-list" style={{ maxHeight: '400px' }}>
+            <table className={`table-misa devices-modal-table ${productId ? 'devices-modal-single-product' : ''}`}>
               <thead>
                 <tr>
-                  <th style={{ width: '160px' }}>Số IMEI</th>
+                  <th>Số IMEI</th>
                   {!productId && <th>Sản phẩm</th>}
-                  <th style={{ width: '110px' }}>Tình trạng</th>
-                  <th style={{ width: '140px' }}>Trạng thái</th>
-                  <th style={{ width: '70px' }} className="col-center">Pin</th>
+                  <th>Tình trạng</th>
+                  <th>Trạng thái</th>
+                  <th className="col-center">Pin</th>
                   <th>Ngoại hình / Lỗi</th>
-                  <th style={{ width: '120px' }} className="col-num">Giá bán</th>
+                  <th className="col-num">Giá bán</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,34 +174,34 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  devices.map((device) => (
+                  visibleDevices.map((device) => (
                     <tr key={device.id}>
-                      <td className="col-sku" style={{ fontWeight: 600, color: '#0f766e' }}>
+                      <td data-label="Số IMEI" className="col-sku" style={{ fontWeight: 600, color: '#0f766e' }}>
                         {device.imei}
                       </td>
                       {!productId && (
-                        <td>
+                        <td data-label="Sản phẩm">
                           <div style={{ fontWeight: 500 }}>{device.product_name}</div>
                           <div style={{ fontSize: '11px', color: '#64748b' }}>{device.sku}</div>
                         </td>
                       )}
-                      <td>
+                      <td data-label="Tình trạng">
                         <Badge variant={device.condition === 'NEW' ? 'new' : 'used'}>
                           {device.condition === 'NEW' ? 'Mới (NEW)' : 'Cũ (USED)'}
                         </Badge>
                       </td>
-                      <td>{getStatusBadge(device.status)}</td>
-                      <td className="col-center">
+                      <td data-label="Trạng thái">{getStatusBadge(device.status)}</td>
+                      <td data-label="Pin" className="col-center">
                         {device.battery !== null && device.battery !== undefined ? `${device.battery}%` : '—'}
                       </td>
-                      <td style={{ fontSize: '12px', color: '#475569' }}>
+                      <td data-label="Ngoại hình / lỗi" style={{ fontSize: '12px', color: '#475569' }}>
                         <div>{device.cosmetic || 'Ngoại hình chuẩn'}</div>
                         {device.defects && <div style={{ color: '#dc2626' }}>Lỗi: {device.defects}</div>}
                         {device.included_accessories && (
                           <div style={{ color: '#64748b' }}>Kèm: {device.included_accessories}</div>
                         )}
                       </td>
-                      <td className="col-money">
+                      <td data-label="Giá bán" className="col-money">
                         {formatVND(device.sale_price)}
                       </td>
                     </tr>
@@ -204,6 +210,15 @@ export const DevicesModal: React.FC<DevicesModalProps> = ({
               </tbody>
             </table>
           </div>
+          {!isLoading && devices.length > 0 && (
+            <div className="compact-pagination" aria-label="Phân trang thiết bị">
+              <span>{devices.length} thiết bị · Trang {page} / {pageCount}</span>
+              <div>
+                <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Trước</Button>
+                <Button type="button" variant="secondary" size="sm" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

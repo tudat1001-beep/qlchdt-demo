@@ -14,6 +14,12 @@ npm run dev
 
 Mở http://127.0.0.1:5175. Tên đăng nhập và mật khẩu được sinh ở `.local/credentials.txt`; cấu hình riêng tại `.env`, không commit/chia sẻ hai file này. Migration khởi tạo tài khoản lần đầu, thay ADMIN_PASSWORD sau đó không tự đổi mật khẩu trong database.
 
+## Demo GitHub Pages
+
+Workflow `.github/workflows/pages.yml` tạo bản demo tĩnh chỉ đọc với dữ liệu mẫu được gắn nhãn rõ ràng. Demo không kết nối PostgreSQL hoặc API thật; các thao tác tạo, thanh toán, bán hàng, đổi trả và thay đổi dữ liệu khác đều bị từ chối, không được lưu. Quy trình build tự dùng tên repository làm đường dẫn gốc, phù hợp với địa chỉ `https://<owner>.github.io/<repository>/`.
+
+Chế độ demo chỉ bật trong workflow Pages bằng `VITE_DEMO_MODE=true`. Để xuất bản, cần đẩy nhánh này lên GitHub và chọn GitHub Actions làm nguồn GitHub Pages.
+
 ```powershell
 npm run build
 npm test

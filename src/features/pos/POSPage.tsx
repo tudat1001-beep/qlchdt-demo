@@ -356,6 +356,7 @@ export const POSPage: React.FC = () => {
 
       {/* Main 2-column POS layout: Left = Catalog & Picking, Right = Multi-line Cart & Payment */}
       <div
+        className="pos-layout"
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(420px, 1.2fr) minmax(380px, 1fr)',
@@ -364,7 +365,7 @@ export const POSPage: React.FC = () => {
         }}
       >
         {/* LEFT COLUMN: Tìm kiếm & Chọn mặt hàng */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="pos-catalog" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Search box */}
           <div className="card" style={{ padding: '12px 14px' }}>
             <div style={{ position: 'relative' }}>
@@ -602,7 +603,7 @@ export const POSPage: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Giỏ hàng đa dòng & Thanh toán */}
-        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="card pos-cart" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--slate-200)', paddingBottom: 10 }}>
             <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: 6 }}>
               <ShoppingCart size={17} color="var(--teal-700)" /> Giỏ hàng ({cart.length} mặt hàng)
@@ -757,7 +758,7 @@ export const POSPage: React.FC = () => {
           </div>
 
           {/* Discount & Note */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="pos-payment-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <Input
               id="pos-discount"
               label="Chiết khấu đơn (VND)"
@@ -818,7 +819,7 @@ export const POSPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="pos-payment-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Input
                 id="pos-cash"
                 label="Tiền mặt (VND)"

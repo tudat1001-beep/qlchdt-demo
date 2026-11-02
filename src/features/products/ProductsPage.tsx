@@ -20,6 +20,12 @@ export const ProductsPage: React.FC = () => {
   // Filters & Search
   const [selectedKind, setSelectedKind] = useState<ProductKind | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   // Sorting
   const [sortField, setSortField] = useState<SortField>('sku');
@@ -45,8 +51,8 @@ export const ProductsPage: React.FC = () => {
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (searchQuery.trim()) {
-        params.set('q', searchQuery.trim());
+      if (debouncedSearchQuery.trim()) {
+        params.set('q', debouncedSearchQuery.trim());
       }
       if (selectedKind !== 'ALL') {
         params.set('kind', selectedKind);
@@ -65,7 +71,7 @@ export const ProductsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedKind]);
+  }, [debouncedSearchQuery, selectedKind]);
 
   useEffect(() => {
     fetchProducts();
@@ -225,7 +231,7 @@ export const ProductsPage: React.FC = () => {
 
       {/* MISA Compact Desktop Table */}
       <div className="table-card">
-        {isLoading ? (
+        {isLoading && products.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#64748b' }}>
               <RefreshCw size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
@@ -241,7 +247,7 @@ export const ProductsPage: React.FC = () => {
             onAction={handleCreate}
           />
         ) : (
-          <div className="table-responsive-wrapper">
+          <div className="table-responsive-wrapper products-table">
             <table className="table-misa" aria-label="Bảng danh mục hàng hóa">
               <thead>
                 <tr>

@@ -26,6 +26,8 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'sales' | 'payments' | 'warranties'>('info');
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyPageSize = 8;
   const [collectingPayment, setCollectingPayment] = useState<{
     referenceId: string;
     referenceNumber: string;
@@ -58,6 +60,18 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
       setActiveTab('info');
     }
   }, [isOpen, customerId, fetchDetail]);
+
+  useEffect(() => setHistoryPage(1), [activeTab, customerId]);
+
+  const historyPagination = (total: number) => total > historyPageSize && (
+    <div className="compact-pagination" aria-label="Phân trang lịch sử khách hàng">
+      <span>{total} giao dịch · Trang {historyPage} / {Math.ceil(total / historyPageSize)}</span>
+      <div>
+        <Button type="button" variant="secondary" size="sm" disabled={historyPage <= 1} onClick={() => setHistoryPage((page) => page - 1)}>Trước</Button>
+        <Button type="button" variant="secondary" size="sm" disabled={historyPage >= Math.ceil(total / historyPageSize)} onClick={() => setHistoryPage((page) => page + 1)}>Sau</Button>
+      </div>
+    </div>
+  );
 
   if (!isOpen) return null;
 
@@ -194,7 +208,8 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                   description="Khách hàng chưa có lịch sử mua hàng được ghi nhận trong hệ thống."
                 />
               ) : (
-                <table className="table-misa">
+                <>
+                <table className="table-misa popup-table">
                   <thead>
                     <tr>
                       <th>Số hóa đơn</th>
@@ -205,15 +220,15 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {customer.sales.map((sale) => (
+                    {customer.sales.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize).map((sale) => (
                       <tr key={sale.id}>
-                        <td className="col-sku">{sale.number}</td>
-                        <td style={{ fontSize: '11px' }}>{formatDateTime(sale.created_at)}</td>
-                        <td className="col-money">{formatVND(sale.total)}</td>
-                        <td className="col-money" style={{ color: sale.debt > 0 ? '#dc2626' : '#15803d' }}>
+                        <td data-label="Số hóa đơn" className="col-sku">{sale.number}</td>
+                        <td data-label="Ngày bán" style={{ fontSize: '11px' }}>{formatDateTime(sale.created_at)}</td>
+                        <td data-label="Tổng tiền" className="col-money">{formatVND(sale.total)}</td>
+                        <td data-label="Còn nợ" className="col-money" style={{ color: sale.debt > 0 ? '#dc2626' : '#15803d' }}>
                           {formatVND(sale.debt)}
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                           {sale.debt > 0 && (
                             <button
                               type="button"
@@ -236,6 +251,8 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                     ))}
                   </tbody>
                 </table>
+                {historyPagination(customer.sales.length)}
+                </>
               )}
             </div>
           )}
@@ -250,7 +267,8 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                   description="Khách hàng chưa phát sinh giao dịch thu tiền thanh toán nợ."
                 />
               ) : (
-                <table className="table-misa">
+                <>
+                <table className="table-misa popup-table">
                   <thead>
                     <tr>
                       <th>Thời gian</th>
@@ -260,22 +278,24 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {customer.payments.map((pmt) => (
+                    {customer.payments.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize).map((pmt) => (
                       <tr key={pmt.id}>
-                        <td style={{ fontSize: '11px' }}>{formatDateTime(pmt.created_at)}</td>
-                        <td>
+                        <td data-label="Thời gian" style={{ fontSize: '11px' }}>{formatDateTime(pmt.created_at)}</td>
+                        <td data-label="Hình thức">
                           <Badge variant="default">
                             {pmt.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
                           </Badge>
                         </td>
-                        <td className="col-money" style={{ color: '#0d9488' }}>
+                        <td data-label="Số tiền" className="col-money" style={{ color: '#0d9488' }}>
                           {formatVND(pmt.amount)}
                         </td>
-                        <td style={{ fontSize: '11px' }}>{pmt.note || '—'}</td>
+                        <td data-label="Ghi chú" style={{ fontSize: '11px' }}>{pmt.note || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {historyPagination(customer.payments.length)}
+                </>
               )}
             </div>
           )}
@@ -290,7 +310,8 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                   description="Khách hàng chưa có lượt tiếp nhận bảo hành máy nào."
                 />
               ) : (
-                <table className="table-misa">
+                <>
+                <table className="table-misa popup-table">
                   <thead>
                     <tr>
                       <th>IMEI máy</th>
@@ -300,18 +321,20 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {customer.warranties.map((w) => (
+                    {customer.warranties.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize).map((w) => (
                       <tr key={w.id}>
-                        <td className="col-sku">{w.imei || w.device_id}</td>
-                        <td>
+                        <td data-label="IMEI máy" className="col-sku">{w.imei || w.device_id}</td>
+                        <td data-label="Trạng thái">
                           <Badge variant="quarantine">{w.status}</Badge>
                         </td>
-                        <td style={{ fontSize: '12px' }}>{w.issue}</td>
-                        <td style={{ fontSize: '11px' }}>{formatDateTime(w.created_at)}</td>
+                        <td data-label="Vấn đề tiếp nhận" style={{ fontSize: '12px' }}>{w.issue}</td>
+                        <td data-label="Ngày gửi" style={{ fontSize: '11px' }}>{formatDateTime(w.created_at)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {historyPagination(customer.warranties.length)}
+                </>
               )}
             </div>
           )}

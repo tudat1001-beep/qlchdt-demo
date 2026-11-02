@@ -24,6 +24,8 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
   const { showSuccess } = useToast();
   // Map of sale_line_id -> quantity to return
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  const [linePage, setLinePage] = useState(1);
+  const linePageSize = 8;
   const [disposition, setDisposition] = useState<'available' | 'quarantine'>('available');
   const [method, setMethod] = useState<'cash' | 'bank'>('cash');
   const [reason, setReason] = useState('');
@@ -34,6 +36,7 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setErrorMessage(null);
+      setLinePage(1);
       // Keep existing inputs if preserving after error, but if empty initialize
       setReturnQuantities((prev) => {
         if (Object.keys(prev).length > 0) return prev;
@@ -232,7 +235,7 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
             </div>
           ) : (
             <div style={{ border: '1px solid var(--slate-200)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', fontSize: '12.5px', borderCollapse: 'collapse' }}>
+              <table className="popup-table" style={{ width: '100%', fontSize: '12.5px', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: 'var(--slate-100)', borderBottom: '1px solid var(--slate-200)' }}>
                     <th style={{ padding: '8px 10px', textAlign: 'left' }}>Sản phẩm / IMEI</th>
@@ -243,7 +246,7 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {sale.lines.map((line) => {
+                  {sale.lines.slice((linePage - 1) * linePageSize, linePage * linePageSize).map((line) => {
                     const remaining = line.quantity - (line.returned_quantity || 0);
                     const qty = returnQuantities[line.id] || 0;
                     const isFullyReturned = remaining <= 0;
@@ -257,7 +260,7 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
                           opacity: isFullyReturned ? 0.6 : 1,
                         }}
                       >
-                        <td style={{ padding: '8px 10px' }}>
+                        <td data-label="Sản phẩm / IMEI" style={{ padding: '8px 10px' }}>
                           <div style={{ fontWeight: 600 }}>{line.product_name}</div>
                           {line.imei && (
                             <div style={{ fontSize: '11px', color: 'var(--slate-500)', fontFamily: 'var(--font-mono)' }}>
@@ -265,14 +268,14 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>{line.quantity}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center', color: 'var(--slate-500)' }}>
+                        <td data-label="Đã mua" style={{ padding: '8px 10px', textAlign: 'center' }}>{line.quantity}</td>
+                        <td data-label="Đã trả" style={{ padding: '8px 10px', textAlign: 'center', color: 'var(--slate-500)' }}>
                           {line.returned_quantity || 0}
                         </td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, color: remaining > 0 ? 'var(--slate-800)' : 'var(--slate-400)' }}>
+                        <td data-label="Còn lại" style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600, color: remaining > 0 ? 'var(--slate-800)' : 'var(--slate-400)' }}>
                           {remaining}
                         </td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                        <td data-label="SL trả" style={{ padding: '8px 10px', textAlign: 'center' }}>
                           {isFullyReturned ? (
                             <span style={{ fontSize: '11px', color: 'var(--slate-400)' }}>Đã trả hết</span>
                           ) : (
@@ -294,6 +297,15 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
                   })}
                 </tbody>
               </table>
+              {sale.lines.length > linePageSize && (
+                <div className="compact-pagination" aria-label="Phân trang mặt hàng cần trả">
+                  <span>{sale.lines.length} mặt hàng · Trang {linePage} / {Math.ceil(sale.lines.length / linePageSize)}</span>
+                  <div>
+                    <Button type="button" variant="secondary" size="sm" disabled={linePage <= 1} onClick={() => setLinePage((page) => page - 1)}>Trước</Button>
+                    <Button type="button" variant="secondary" size="sm" disabled={linePage >= Math.ceil(sale.lines.length / linePageSize)} onClick={() => setLinePage((page) => page + 1)}>Sau</Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

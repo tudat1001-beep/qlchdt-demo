@@ -156,7 +156,7 @@ export const PurchasesPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--slate-200)', marginBottom: 16 }}>
+      <div className="inventory-tabs" style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--slate-200)', marginBottom: 16 }}>
         <button
           type="button"
           onClick={() => { setActiveTab('purchases'); setSearchQuery(''); }}
@@ -225,7 +225,7 @@ export const PurchasesPage: React.FC = () => {
       </div>
 
       {/* Filter / Search Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 12 }}>
+      <div className="page-filter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 12 }}>
         <div style={{ position: 'relative', width: 340 }}>
           <Search
             size={16}
@@ -287,7 +287,7 @@ export const PurchasesPage: React.FC = () => {
               onAction={() => setIsPurchaseModalOpen(true)}
             />
           ) : (
-            <div className="table-responsive-wrapper">
+            <div className={`table-responsive-wrapper inventory-table inventory-table-${activeTab}`}>
               <table className="table-misa">
               <thead>
                 <tr>
@@ -377,7 +377,7 @@ export const PurchasesPage: React.FC = () => {
               description="Các giao dịch nhập hàng và xuất bán sẽ tự động ghi sổ kho append-only tại đây."
             />
           ) : (
-            <div className="table-responsive-wrapper">
+            <div className={`table-responsive-wrapper inventory-table inventory-table-${activeTab}`}>
               <table className="table-misa">
               <thead>
                 <tr>
@@ -441,7 +441,7 @@ export const PurchasesPage: React.FC = () => {
               description="Chưa có thiết bị nào trong kho hoặc không tìm thấy thiết bị thỏa mãn điều kiện lọc."
             />
           ) : (
-            <div className="table-responsive-wrapper">
+            <div className={`table-responsive-wrapper inventory-table inventory-table-${activeTab}`}>
               <table className="table-misa">
               <thead>
                 <tr>

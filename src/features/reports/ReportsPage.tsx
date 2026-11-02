@@ -143,7 +143,7 @@ export const ReportsPage: React.FC = () => {
           </button>
 
           {/* Date Picker Inputs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
+          <div className="report-date-range" style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
             <span style={{ fontSize: '13px', color: 'var(--slate-500)' }}>Từ</span>
             <input
               type="date"
@@ -174,7 +174,7 @@ export const ReportsPage: React.FC = () => {
 
       {/* 8 Visibly Distinct & Server-Derived Metric Cards */}
       <div
-        className="metrics-grid"
+        className="metrics-grid report-metrics-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',

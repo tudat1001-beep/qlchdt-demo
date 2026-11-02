@@ -62,6 +62,8 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
       devices: [],
     },
   ]);
+  const [devicePages, setDevicePages] = useState<Record<string, number>>({});
+  const devicePageSize = 8;
 
   // Fetch suppliers and products
   const { data: suppliersData } = useQuery<{ items: Supplier[] }>({
@@ -110,6 +112,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   const handleProductChange = (lineIndex: number, prodId: string) => {
     const prod = productMap.get(prodId);
+    setDevicePages((current) => ({ ...current, [lines[lineIndex].id]: 1 }));
     setLines((prev) => {
       const next = [...prev];
       const isPhone = prod?.kind === 'PHONE';
@@ -137,6 +140,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   const handleAddDevice = (lineIndex: number) => {
     const prod = productMap.get(lines[lineIndex].product_id);
+    setDevicePages((current) => ({ ...current, [lines[lineIndex].id]: Math.ceil((lines[lineIndex].devices.length + 1) / devicePageSize) }));
     setLines((prev) => {
       const next = [...prev];
       const line = next[lineIndex];
@@ -160,10 +164,12 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
   };
 
   const handleRemoveDevice = (lineIndex: number, devIndex: number) => {
+    const currentLine = lines[lineIndex];
+    if (currentLine.devices.length <= 1) return;
+    setDevicePages((current) => ({ ...current, [currentLine.id]: Math.min(current[currentLine.id] || 1, Math.max(1, Math.ceil((currentLine.devices.length - 1) / devicePageSize))) }));
     setLines((prev) => {
       const next = [...prev];
       const line = next[lineIndex];
-      if (line.devices.length <= 1) return prev;
       const updatedDevices = line.devices.filter((_, i) => i !== devIndex);
       next[lineIndex] = {
         ...line,
@@ -399,7 +405,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         )}
 
         {/* Section: Thông tin chung */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="purchase-general-grid">
           <Select
             label="Nhà cung cấp (*)"
             value={supplierId}
@@ -462,9 +468,9 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                   }}
                 >
                   <div
+                    className="purchase-line-grid"
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'minmax(220px, 2fr) minmax(130px, 1fr) minmax(90px, 0.8fr) minmax(110px, 1fr) 36px',
                       gap: 10,
                       alignItems: 'flex-start',
                     }}
@@ -602,12 +608,14 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {line.devices.map((dev, devIndex) => (
+                        {line.devices.slice(((devicePages[line.id] || 1) - 1) * devicePageSize, (devicePages[line.id] || 1) * devicePageSize).map((dev, deviceOffset) => {
+                          const devIndex = ((devicePages[line.id] || 1) - 1) * devicePageSize + deviceOffset;
+                          return (
                           <div
                             key={devIndex}
+                            className="purchase-device-grid"
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: 'minmax(140px, 1.5fr) 95px 80px 110px 120px 28px',
                               gap: 6,
                               alignItems: 'center',
                               fontSize: '12px',
@@ -679,8 +687,18 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                               <Trash2 size={14} />
                             </button>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
+                      {line.devices.length > devicePageSize && (
+                        <div className="compact-pagination" aria-label={`Phân trang IMEI dòng ${lineIndex + 1}`}>
+                          <span>{line.devices.length} máy · Trang {devicePages[line.id] || 1} / {Math.ceil(line.devices.length / devicePageSize)}</span>
+                          <div>
+                            <Button type="button" variant="secondary" size="sm" disabled={(devicePages[line.id] || 1) <= 1} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: (current[line.id] || 1) - 1 }))}>Trước</Button>
+                            <Button type="button" variant="secondary" size="sm" disabled={(devicePages[line.id] || 1) >= Math.ceil(line.devices.length / devicePageSize)} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: (current[line.id] || 1) + 1 }))}>Sau</Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -690,21 +708,13 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         </div>
 
         {/* Section: Thanh toán & Ghi nợ */}
-        <div
-          style={{
-            borderTop: '1px solid var(--slate-200)',
-            paddingTop: 14,
-            display: 'grid',
-            gridTemplateColumns: '1.2fr 1fr',
-            gap: 16,
-          }}
-        >
-          <div>
+        <div className="purchase-payment-grid">
+          <div className="purchase-payment-fields">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontWeight: 600, color: 'var(--slate-800)', fontSize: '13px' }}>
                 Thanh toán cho nhà cung cấp
               </span>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div className="purchase-payment-actions" style={{ display: 'flex', gap: 6 }}>
                 <button
                   type="button"
                   onClick={setFullPayment}
@@ -724,7 +734,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="purchase-payment-input-grid">
               <Input
                 id="purchase-cash"
                 label="Tiền mặt (VND)"
@@ -771,15 +781,16 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                <div className="purchase-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
                 <span style={{ color: 'var(--slate-600)' }}>Tiền hàng ({lines.reduce((s, l) => s + (l.devices.length || l.quantity), 0)} sản phẩm):</span>
                 <span style={{ fontWeight: 500 }}>{formatVND(subtotal)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+              <div className="purchase-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
                 <span style={{ color: 'var(--slate-600)' }}>Chi phí mua hàng:</span>
                 <span style={{ fontWeight: 500 }}>{formatVND(extraCost)}</span>
               </div>
               <div
+                className="purchase-summary-row purchase-summary-total"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -793,11 +804,12 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 <span>Tổng phiếu nhập:</span>
                 <span style={{ color: 'var(--teal-700)' }}>{formatVND(total)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginTop: 4 }}>
+              <div className="purchase-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginTop: 4 }}>
                 <span style={{ color: 'var(--slate-600)' }}>Đã thanh toán (Tiền mặt + CK):</span>
                 <span style={{ fontWeight: 600, color: 'var(--success-700)' }}>{formatVND(paid)}</span>
               </div>
               <div
+                className="purchase-summary-row"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',

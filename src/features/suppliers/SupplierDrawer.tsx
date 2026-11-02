@@ -26,6 +26,8 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'purchases' | 'payments'>('info');
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyPageSize = 8;
   const [payingDebt, setPayingDebt] = useState<{
     referenceId: string;
     referenceNumber: string;
@@ -58,6 +60,18 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
       setActiveTab('info');
     }
   }, [isOpen, supplierId, fetchDetail]);
+
+  useEffect(() => setHistoryPage(1), [activeTab, supplierId]);
+
+  const historyPagination = (total: number) => total > historyPageSize && (
+    <div className="compact-pagination" aria-label="Phân trang lịch sử nhà cung cấp">
+      <span>{total} giao dịch · Trang {historyPage} / {Math.ceil(total / historyPageSize)}</span>
+      <div>
+        <Button type="button" variant="secondary" size="sm" disabled={historyPage <= 1} onClick={() => setHistoryPage((page) => page - 1)}>Trước</Button>
+        <Button type="button" variant="secondary" size="sm" disabled={historyPage >= Math.ceil(total / historyPageSize)} onClick={() => setHistoryPage((page) => page + 1)}>Sau</Button>
+      </div>
+    </div>
+  );
 
   if (!isOpen) return null;
 
@@ -187,7 +201,8 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                   description="Nhà cung cấp chưa có đơn nhập hàng nào được lập trong hệ thống."
                 />
               ) : (
-                <table className="table-misa">
+                <>
+                <table className="table-misa popup-table">
                   <thead>
                     <tr>
                       <th>Số phiếu</th>
@@ -199,16 +214,16 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {supplier.purchases.map((po) => (
+                    {supplier.purchases.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize).map((po) => (
                       <tr key={po.id}>
-                        <td className="col-sku">{po.number}</td>
-                        <td style={{ fontSize: '11px' }}>{formatDateTime(po.created_at)}</td>
-                        <td className="col-money">{formatVND(po.total)}</td>
-                        <td className="col-money" style={{ color: '#15803d' }}>{formatVND(po.paid)}</td>
-                        <td className="col-money" style={{ color: po.debt > 0 ? '#b45309' : '#15803d' }}>
+                        <td data-label="Số phiếu" className="col-sku">{po.number}</td>
+                        <td data-label="Ngày nhập" style={{ fontSize: '11px' }}>{formatDateTime(po.created_at)}</td>
+                        <td data-label="Tổng tiền" className="col-money">{formatVND(po.total)}</td>
+                        <td data-label="Đã trả" className="col-money" style={{ color: '#15803d' }}>{formatVND(po.paid)}</td>
+                        <td data-label="Còn nợ" className="col-money" style={{ color: po.debt > 0 ? '#b45309' : '#15803d' }}>
                           {formatVND(po.debt)}
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                           {po.debt > 0 && (
                             <button
                               type="button"
@@ -231,6 +246,8 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                     ))}
                   </tbody>
                 </table>
+                {historyPagination(supplier.purchases.length)}
+                </>
               )}
             </div>
           )}
@@ -245,7 +262,8 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                   description="Chưa có lịch sử thanh toán tiền hàng phát sinh cho nhà cung cấp này."
                 />
               ) : (
-                <table className="table-misa">
+                <>
+                <table className="table-misa popup-table">
                   <thead>
                     <tr>
                       <th>Thời gian</th>
@@ -255,22 +273,24 @@ export const SupplierDrawer: React.FC<SupplierDrawerProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {supplier.payments.map((pmt) => (
+                    {supplier.payments.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize).map((pmt) => (
                       <tr key={pmt.id}>
-                        <td style={{ fontSize: '11px' }}>{formatDateTime(pmt.created_at)}</td>
-                        <td>
+                        <td data-label="Thời gian" style={{ fontSize: '11px' }}>{formatDateTime(pmt.created_at)}</td>
+                        <td data-label="Hình thức">
                           <Badge variant="default">
                             {pmt.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
                           </Badge>
                         </td>
-                        <td className="col-money" style={{ color: '#0d9488' }}>
+                        <td data-label="Số tiền chi" className="col-money" style={{ color: '#0d9488' }}>
                           {formatVND(pmt.amount)}
                         </td>
-                        <td style={{ fontSize: '11px' }}>{pmt.note || '—'}</td>
+                        <td data-label="Ghi chú" style={{ fontSize: '11px' }}>{pmt.note || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {historyPagination(supplier.payments.length)}
+                </>
               )}
             </div>
           )}

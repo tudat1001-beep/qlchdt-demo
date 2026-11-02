@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Drawer } from '../../components/ui/Drawer';
 import { Badge } from '../../components/ui/Badge';
@@ -26,6 +26,10 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
   const queryClient = useQueryClient();
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [linesPage, setLinesPage] = useState(1);
+  const linesPageSize = 8;
+
+  useEffect(() => setLinesPage(1), [saleId, isOpen]);
 
   const { data: sale, isLoading, isError, refetch } = useQuery<SaleDetail>({
     queryKey: ['sales', saleId],
@@ -202,14 +206,14 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
             </div>
 
             {/* Bảng chi tiết mặt hàng */}
-            <div style={{ overflowX: 'auto' }}>
+            <div className="popup-table-wrap">
               <table
+                className="popup-table"
                 style={{
                   width: '100%',
                   fontSize: '12px',
                   borderCollapse: 'collapse',
                   marginTop: 4,
-                  minWidth: '550px',
                 }}
               >
                 <thead>
@@ -225,10 +229,10 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {sale.lines.map((line, idx) => (
+                  {sale.lines.slice((linesPage - 1) * linesPageSize, linesPage * linesPageSize).map((line, idx) => (
                     <tr key={line.id} style={{ borderBottom: '1px dashed var(--slate-200)' }}>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>{idx + 1}</td>
-                      <td style={{ padding: '6px 8px' }}>
+                      <td data-label="STT" style={{ padding: '6px 8px', textAlign: 'center' }}>{(linesPage - 1) * linesPageSize + idx + 1}</td>
+                      <td data-label="Mặt hàng / IMEI" style={{ padding: '6px 8px' }}>
                         <div style={{ fontWeight: 600 }}>{line.product_name}</div>
                         {line.imei && (
                           <div style={{ fontSize: '11px', color: 'var(--slate-600)', fontFamily: 'var(--font-mono)' }}>
@@ -236,28 +240,37 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', color: 'var(--slate-500)' }}>
+                      <td data-label="Đơn vị" style={{ padding: '6px 8px', textAlign: 'center', color: 'var(--slate-500)' }}>
                         {line.kind === 'PHONE' ? 'Máy' : 'Cái'}
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>
+                      <td data-label="SL mua" style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>
                         {line.quantity}
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', color: line.returned_quantity > 0 ? 'var(--danger-600)' : 'var(--slate-400)', fontWeight: line.returned_quantity > 0 ? 600 : 400 }}>
+                      <td data-label="Đã trả" style={{ padding: '6px 8px', textAlign: 'center', color: line.returned_quantity > 0 ? 'var(--danger-600)' : 'var(--slate-400)', fontWeight: line.returned_quantity > 0 ? 600 : 400 }}>
                         {line.returned_quantity || 0}
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                      <td data-label="Đơn giá" style={{ padding: '6px 8px', textAlign: 'right' }}>
                         {formatVND(line.unit_price)}
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', color: 'var(--slate-500)' }}>
+                      <td data-label="Chiết khấu" style={{ padding: '6px 8px', textAlign: 'right', color: 'var(--slate-500)' }}>
                         {line.discount > 0 ? formatVND(line.discount) : '—'}
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600, color: 'var(--slate-900)' }}>
+                      <td data-label="Thành tiền" style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600, color: 'var(--slate-900)' }}>
                         {formatVND(line.total)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {sale.lines.length > linesPageSize && (
+                <div className="compact-pagination" aria-label="Phân trang mặt hàng trên hóa đơn">
+                  <span>{sale.lines.length} mặt hàng · Trang {linesPage} / {Math.ceil(sale.lines.length / linesPageSize)}</span>
+                  <div>
+                    <Button type="button" variant="secondary" size="sm" disabled={linesPage <= 1} onClick={() => setLinesPage((page) => page - 1)}>Trước</Button>
+                    <Button type="button" variant="secondary" size="sm" disabled={linesPage >= Math.ceil(sale.lines.length / linesPageSize)} onClick={() => setLinesPage((page) => page + 1)}>Sau</Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Tổng kết tiền - Chuẩn tài chính máy chủ tính toán */}
