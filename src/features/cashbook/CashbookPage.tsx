@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sumSignedVnd } from '../../../shared/money';
 import { api } from '../../lib/api-client';
@@ -38,6 +38,12 @@ export const CashbookPage: React.FC = () => {
   const [directionFilter, setDirectionFilter] = useState<'all' | 'in' | 'out'>('all');
   const [methodFilter, setMethodFilter] = useState<'all' | 'cash' | 'bank'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, directionFilter, methodFilter]);
 
   const { data, isLoading, refetch, isFetching } = useQuery<CashResponse>({
     queryKey: ['cash'],
@@ -376,7 +382,7 @@ export const CashbookPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((item) => {
+                filteredItems.slice((page - 1) * pageSize, page * pageSize).map((item) => {
                   const isIncome = item.direction === 'in';
                   return (
                     <tr key={item.id}>
@@ -427,6 +433,32 @@ export const CashbookPage: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="table-footer-pagination" aria-label="Phân trang sổ quỹ">
+          <span>
+            Tổng cộng: <strong>{filteredItems.length}</strong> giao dịch · Trang {Math.min(page, Math.max(1, Math.ceil(filteredItems.length / pageSize)))} / {Math.max(1, Math.ceil(filteredItems.length / pageSize))}
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Trước
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page >= Math.max(1, Math.ceil(filteredItems.length / pageSize))}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Sau
+            </Button>
+          </div>
         </div>
       </div>
 

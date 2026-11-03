@@ -262,15 +262,19 @@ export const SaleDrawer: React.FC<SaleDrawerProps> = ({
                   ))}
                 </tbody>
               </table>
-              {sale.lines.length > linesPageSize && (
-                <div className="compact-pagination" aria-label="Phân trang mặt hàng trên hóa đơn">
-                  <span>{sale.lines.length} mặt hàng · Trang {linesPage} / {Math.ceil(sale.lines.length / linesPageSize)}</span>
-                  <div>
-                    <Button type="button" variant="secondary" size="sm" disabled={linesPage <= 1} onClick={() => setLinesPage((page) => page - 1)}>Trước</Button>
-                    <Button type="button" variant="secondary" size="sm" disabled={linesPage >= Math.ceil(sale.lines.length / linesPageSize)} onClick={() => setLinesPage((page) => page + 1)}>Sau</Button>
+              {sale.lines.length > 0 && (() => {
+                const totalPages = Math.max(1, Math.ceil(sale.lines.length / linesPageSize));
+                const page = Math.min(Math.max(1, linesPage), totalPages);
+                return (
+                  <div className="compact-pagination" aria-label="Phân trang mặt hàng trên hóa đơn">
+                    <span>{sale.lines.length} mặt hàng · Trang {page} / {totalPages}</span>
+                    <div>
+                      <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setLinesPage((p) => p - 1)}>Trước</Button>
+                      <Button type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setLinesPage((p) => p + 1)}>Sau</Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Tổng kết tiền - Chuẩn tài chính máy chủ tính toán */}

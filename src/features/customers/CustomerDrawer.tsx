@@ -63,15 +63,19 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({
 
   useEffect(() => setHistoryPage(1), [activeTab, customerId]);
 
-  const historyPagination = (total: number) => total > historyPageSize && (
-    <div className="compact-pagination" aria-label="Phân trang lịch sử khách hàng">
-      <span>{total} giao dịch · Trang {historyPage} / {Math.ceil(total / historyPageSize)}</span>
-      <div>
-        <Button type="button" variant="secondary" size="sm" disabled={historyPage <= 1} onClick={() => setHistoryPage((page) => page - 1)}>Trước</Button>
-        <Button type="button" variant="secondary" size="sm" disabled={historyPage >= Math.ceil(total / historyPageSize)} onClick={() => setHistoryPage((page) => page + 1)}>Sau</Button>
+  const historyPagination = (total: number) => {
+    const pages = Math.max(1, Math.ceil(total / historyPageSize));
+    const page = Math.min(Math.max(1, historyPage), pages);
+    return (
+      <div className="compact-pagination" aria-label="Phân trang lịch sử khách hàng">
+        <span>{total} giao dịch · Trang {page} / {pages}</span>
+        <div>
+          <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setHistoryPage((p) => p - 1)}>Trước</Button>
+          <Button type="button" variant="secondary" size="sm" disabled={page >= pages} onClick={() => setHistoryPage((p) => p + 1)}>Sau</Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (!isOpen) return null;
 

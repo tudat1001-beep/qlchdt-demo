@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api-client';
 import { formatVND, formatDateTime } from '../../lib/formatters';
@@ -18,6 +18,12 @@ export const PurchasesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<InventoryTab>('purchases');
   const [searchQuery, setSearchQuery] = useState('');
   const [deviceStatusFilter, setDeviceStatusFilter] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, searchQuery, deviceStatusFilter]);
 
   // Modals & Drawers state
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
@@ -303,7 +309,7 @@ export const PurchasesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredPurchases.map((p) => (
+                {filteredPurchases.slice((page - 1) * pageSize, page * pageSize).map((p) => (
                   <tr key={p.id}>
                     <td data-label="Mã phiếu" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                       <button
@@ -361,6 +367,16 @@ export const PurchasesPage: React.FC = () => {
             </table>
             </div>
           )}
+
+          <div className="table-footer-pagination" aria-label="Phân trang phiếu nhập">
+            <span>
+              Tổng cộng: <strong>{filteredPurchases.length}</strong> phiếu nhập · Trang {Math.min(page, Math.max(1, Math.ceil(filteredPurchases.length / pageSize)))} / {Math.max(1, Math.ceil(filteredPurchases.length / pageSize))}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= Math.max(1, Math.ceil(filteredPurchases.length / pageSize))} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -391,7 +407,7 @@ export const PurchasesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredMovements.map((m) => {
+                {filteredMovements.slice((page - 1) * pageSize, page * pageSize).map((m) => {
                   const isPositive = m.quantity > 0;
                   return (
                     <tr key={m.id}>
@@ -425,6 +441,16 @@ export const PurchasesPage: React.FC = () => {
             </table>
             </div>
           )}
+
+          <div className="table-footer-pagination" aria-label="Phân trang sổ kho">
+            <span>
+              Tổng cộng: <strong>{filteredMovements.length}</strong> biến động · Trang {Math.min(page, Math.max(1, Math.ceil(filteredMovements.length / pageSize)))} / {Math.max(1, Math.ceil(filteredMovements.length / pageSize))}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= Math.max(1, Math.ceil(filteredMovements.length / pageSize))} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -456,7 +482,7 @@ export const PurchasesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDevices.map((d) => (
+                {filteredDevices.slice((page - 1) * pageSize, page * pageSize).map((d) => (
                   <tr key={d.id}>
                     <td data-label="Số IMEI" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{d.imei}</td>
                     <td data-label="Sản phẩm" style={{ fontWeight: 500 }}>{d.product_name}</td>
@@ -483,6 +509,16 @@ export const PurchasesPage: React.FC = () => {
             </table>
             </div>
           )}
+
+          <div className="table-footer-pagination" aria-label="Phân trang thiết bị">
+            <span>
+              Tổng cộng: <strong>{filteredDevices.length}</strong> thiết bị · Trang {Math.min(page, Math.max(1, Math.ceil(filteredDevices.length / pageSize)))} / {Math.max(1, Math.ceil(filteredDevices.length / pageSize))}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= Math.max(1, Math.ceil(filteredDevices.length / pageSize))} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            </div>
+          </div>
         </div>
       )}
 

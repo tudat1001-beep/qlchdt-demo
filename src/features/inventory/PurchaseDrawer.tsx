@@ -247,15 +247,15 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                             ))}
                           </tbody>
                         </table>
-                        {line.devices.length > 8 && (() => {
-                          const page = devicePages[line.id] || 1;
-                          const pages = Math.ceil(line.devices.length / 8);
+                        {line.devices.length > 0 && (() => {
+                          const pages = Math.max(1, Math.ceil(line.devices.length / 8));
+                          const page = Math.min(Math.max(1, devicePages[line.id] || 1), pages);
                           return (
                             <div className="compact-pagination" aria-label="Phân trang thiết bị trong phiếu nhập">
                               <span>{line.devices.length} máy · Trang {page} / {pages}</span>
                               <div>
-                                <Button type="button" variant="secondary" size="sm" disabled={page === 1} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page - 1 }))}>Trước</Button>
-                                <Button type="button" variant="secondary" size="sm" disabled={page === pages} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page + 1 }))}>Sau</Button>
+                                <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page - 1 }))}>Trước</Button>
+                                <Button type="button" variant="secondary" size="sm" disabled={page >= pages} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page + 1 }))}>Sau</Button>
                               </div>
                             </div>
                           );
@@ -319,15 +319,19 @@ export const PurchaseDrawer: React.FC<PurchaseDrawerProps> = ({
                     ))}
                   </tbody>
                 </table>
-                {purchase.payments.length > paymentPageSize && (
-                  <div className="compact-pagination" aria-label="Phân trang lịch sử thanh toán">
-                    <span>{purchase.payments.length} giao dịch · Trang {paymentPage} / {Math.ceil(purchase.payments.length / paymentPageSize)}</span>
-                    <div>
-                      <Button type="button" variant="secondary" size="sm" disabled={paymentPage <= 1} onClick={() => setPaymentPage((page) => page - 1)}>Trước</Button>
-                      <Button type="button" variant="secondary" size="sm" disabled={paymentPage >= Math.ceil(purchase.payments.length / paymentPageSize)} onClick={() => setPaymentPage((page) => page + 1)}>Sau</Button>
+                {purchase.payments.length > 0 && (() => {
+                  const pages = Math.max(1, Math.ceil(purchase.payments.length / paymentPageSize));
+                  const page = Math.min(Math.max(1, paymentPage), pages);
+                  return (
+                    <div className="compact-pagination" aria-label="Phân trang lịch sử thanh toán">
+                      <span>{purchase.payments.length} giao dịch · Trang {page} / {pages}</span>
+                      <div>
+                        <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPaymentPage((p) => p - 1)}>Trước</Button>
+                        <Button type="button" variant="secondary" size="sm" disabled={page >= pages} onClick={() => setPaymentPage((p) => p + 1)}>Sau</Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
                 </>
               )}
             </div>

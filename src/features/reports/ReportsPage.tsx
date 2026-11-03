@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api-client';
 import { formatVND, formatNumber } from '../../lib/formatters';
@@ -52,12 +52,22 @@ export const ReportsPage: React.FC = () => {
   const [from, setFrom] = useState(thirtyDaysAgoStr);
   const [to, setTo] = useState(todayStr);
   const [activeTab, setActiveTab] = useState<ReportTab>('daily');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, from, to]);
 
   const { data, isLoading, refetch, isFetching } = useQuery<ReportsResponse>({
     queryKey: ['reports', from, to],
     queryFn: () => api.get<ReportsResponse>(`/reports?from=${from}&to=${to}`),
     enabled: Boolean(from && to && from <= to),
   });
+
+  const dailyItems = data?.daily || [];
+  const bestSellersItems = data?.best_sellers || [];
+  const lowStockItems = data?.low_stock || [];
 
   const handleApplyPreset = (presetFrom: string, presetTo: string) => {
     setFrom(presetFrom);
@@ -540,7 +550,7 @@ export const ReportsPage: React.FC = () => {
                       Đang kết xuất dữ liệu doanh thu theo ngày...
                     </td>
                   </tr>
-                ) : !data?.daily || data.daily.length === 0 ? (
+                ) : dailyItems.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ padding: '36px 0' }}>
                       <EmptyState
@@ -550,7 +560,7 @@ export const ReportsPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  data.daily.map((row) => (
+                  dailyItems.slice((page - 1) * pageSize, page * pageSize).map((row) => (
                     <tr key={row.date}>
                       <td data-label="Ngày" style={{ fontWeight: 600 }}>{row.date}</td>
                       <td data-label="Doanh thu thuần" className="col-money" style={{ color: 'var(--teal-700)' }}>
@@ -578,6 +588,16 @@ export const ReportsPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          <div className="table-footer-pagination" aria-label="Phân trang doanh thu theo ngày">
+            <span>
+              Tổng cộng: <strong>{dailyItems.length}</strong> ngày · Trang {Math.min(page, Math.max(1, Math.ceil(dailyItems.length / pageSize)))} / {Math.max(1, Math.ceil(dailyItems.length / pageSize))}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= Math.max(1, Math.ceil(dailyItems.length / pageSize))} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -602,7 +622,7 @@ export const ReportsPage: React.FC = () => {
                       Đang phân tích top sản phẩm bán chạy...
                     </td>
                   </tr>
-                ) : !data?.best_sellers || data.best_sellers.length === 0 ? (
+                ) : bestSellersItems.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ padding: '36px 0' }}>
                       <EmptyState
@@ -612,10 +632,12 @@ export const ReportsPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  data.best_sellers.map((item, index) => (
+                  bestSellersItems.slice((page - 1) * pageSize, page * pageSize).map((item, index) => {
+                    const rank = (page - 1) * pageSize + index + 1;
+                    return (
                     <tr key={item.product_id}>
-                      <td data-label="Hạng" className="col-center" style={{ fontWeight: 700, color: index < 3 ? 'var(--teal-600)' : 'var(--slate-500)' }}>
-                        #{index + 1}
+                      <td data-label="Hạng" className="col-center" style={{ fontWeight: 700, color: rank <= 3 ? 'var(--teal-600)' : 'var(--slate-500)' }}>
+                        #{rank}
                       </td>
                       <td data-label="Mã sản phẩm" className="col-sku">{item.product_id.slice(0, 8)}…</td>
                       <td data-label="Tên sản phẩm" style={{ fontWeight: 600 }}>{item.product_name}</td>
@@ -626,10 +648,21 @@ export const ReportsPage: React.FC = () => {
                         {formatVND(item.revenue)}
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="table-footer-pagination" aria-label="Phân trang top bán chạy">
+            <span>
+              Tổng cộng: <strong>{bestSellersItems.length}</strong> sản phẩm · Trang {Math.min(page, Math.max(1, Math.ceil(bestSellersItems.length / pageSize)))} / {Math.max(1, Math.ceil(bestSellersItems.length / pageSize))}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= Math.max(1, Math.ceil(bestSellersItems.length / pageSize))} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            </div>
           </div>
         </div>
       )}
@@ -656,7 +689,7 @@ export const ReportsPage: React.FC = () => {
                       Đang kiểm tra ngưỡng tồn kho tối thiểu...
                     </td>
                   </tr>
-                ) : !data?.low_stock || data.low_stock.length === 0 ? (
+                ) : lowStockItems.length === 0 ? (
                   <tr>
                     <td colSpan={6} style={{ padding: '36px 0' }}>
                       <EmptyState
@@ -666,7 +699,7 @@ export const ReportsPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  data.low_stock.map((item) => {
+                  lowStockItems.slice((page - 1) * pageSize, page * pageSize).map((item) => {
                     const isZero = item.stock_quantity <= 0;
                     return (
                       <tr key={item.id}>
@@ -703,6 +736,16 @@ export const ReportsPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="table-footer-pagination" aria-label="Phân trang cảnh báo tồn kho">
+            <span>
+              Tổng cộng: <strong>{lowStockItems.length}</strong> sản phẩm · Trang {Math.min(page, Math.max(1, Math.ceil(lowStockItems.length / pageSize)))} / {Math.max(1, Math.ceil(lowStockItems.length / pageSize))}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= Math.max(1, Math.ceil(lowStockItems.length / pageSize))} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            </div>
           </div>
         </div>
       )}

@@ -30,6 +30,12 @@ export const ProductsPage: React.FC = () => {
   // Sorting
   const [sortField, setSortField] = useState<SortField>('sku');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, selectedKind, sortField, sortDirection]);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -298,7 +304,7 @@ export const ProductsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {sortedProducts.map((prod) => {
+                {sortedProducts.slice((page - 1) * pageSize, page * pageSize).map((prod) => {
                   const isLowStock =
                     prod.min_stock !== null &&
                     prod.min_stock !== undefined &&
@@ -380,13 +386,30 @@ export const ProductsPage: React.FC = () => {
         )}
 
         {/* MISA Table Footer */}
-        <div className="table-footer-pagination">
+        <div className="table-footer-pagination" aria-label="Phân trang sản phẩm">
           <span>
-            Tổng cộng: <strong>{products.length}</strong> mặt hàng
+            Tổng cộng: <strong>{products.length}</strong> mặt hàng · Trang {Math.min(page, Math.max(1, Math.ceil(products.length / pageSize)))} / {Math.max(1, Math.ceil(products.length / pageSize))}
           </span>
-          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-            Sổ danh mục hàng hóa
-          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Trước
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page >= Math.max(1, Math.ceil(products.length / pageSize))}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Sau
+            </Button>
+          </div>
         </div>
       </div>
 

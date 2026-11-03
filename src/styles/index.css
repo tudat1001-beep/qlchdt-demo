@@ -746,6 +746,8 @@ button, input, select, textarea {
   color: var(--slate-600);
 }
 
+.table-footer-pagination > div { display: flex; gap: 6px; }
+
 .compact-pagination {
   display: flex;
   align-items: center;
@@ -2418,7 +2420,8 @@ button, input, select, textarea {
   .devices-modal-table td:nth-child(1),
   .purchase-device-table td:nth-child(1) { font-size: 13px; }
 
-  .compact-pagination .btn { min-height: 44px; }
+  .compact-pagination .btn,
+  .table-footer-pagination .btn { min-height: 44px; }
 
   .toolbar-card .search-input-wrapper,
   .toolbar-card .search-input {

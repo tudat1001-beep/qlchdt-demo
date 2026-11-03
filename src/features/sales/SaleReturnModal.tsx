@@ -297,15 +297,19 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
                   })}
                 </tbody>
               </table>
-              {sale.lines.length > linePageSize && (
-                <div className="compact-pagination" aria-label="Phân trang mặt hàng cần trả">
-                  <span>{sale.lines.length} mặt hàng · Trang {linePage} / {Math.ceil(sale.lines.length / linePageSize)}</span>
-                  <div>
-                    <Button type="button" variant="secondary" size="sm" disabled={linePage <= 1} onClick={() => setLinePage((page) => page - 1)}>Trước</Button>
-                    <Button type="button" variant="secondary" size="sm" disabled={linePage >= Math.ceil(sale.lines.length / linePageSize)} onClick={() => setLinePage((page) => page + 1)}>Sau</Button>
+              {sale.lines.length > 0 && (() => {
+                const totalPages = Math.max(1, Math.ceil(sale.lines.length / linePageSize));
+                const page = Math.min(Math.max(1, linePage), totalPages);
+                return (
+                  <div className="compact-pagination" aria-label="Phân trang mặt hàng cần trả">
+                    <span>{sale.lines.length} mặt hàng · Trang {page} / {totalPages}</span>
+                    <div>
+                      <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setLinePage((p) => p - 1)}>Trước</Button>
+                      <Button type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setLinePage((p) => p + 1)}>Sau</Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </div>

@@ -690,15 +690,19 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                           );
                         })}
                       </div>
-                      {line.devices.length > devicePageSize && (
-                        <div className="compact-pagination" aria-label={`Phân trang IMEI dòng ${lineIndex + 1}`}>
-                          <span>{line.devices.length} máy · Trang {devicePages[line.id] || 1} / {Math.ceil(line.devices.length / devicePageSize)}</span>
-                          <div>
-                            <Button type="button" variant="secondary" size="sm" disabled={(devicePages[line.id] || 1) <= 1} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: (current[line.id] || 1) - 1 }))}>Trước</Button>
-                            <Button type="button" variant="secondary" size="sm" disabled={(devicePages[line.id] || 1) >= Math.ceil(line.devices.length / devicePageSize)} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: (current[line.id] || 1) + 1 }))}>Sau</Button>
+                      {line.devices.length > 0 && (() => {
+                        const pages = Math.max(1, Math.ceil(line.devices.length / devicePageSize));
+                        const page = Math.min(Math.max(1, devicePages[line.id] || 1), pages);
+                        return (
+                          <div className="compact-pagination" aria-label={`Phân trang IMEI dòng ${lineIndex + 1}`}>
+                            <span>{line.devices.length} máy · Trang {page} / {pages}</span>
+                            <div>
+                              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page - 1 }))}>Trước</Button>
+                              <Button type="button" variant="secondary" size="sm" disabled={page >= pages} onClick={() => setDevicePages((current) => ({ ...current, [line.id]: page + 1 }))}>Sau</Button>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
                 </div>

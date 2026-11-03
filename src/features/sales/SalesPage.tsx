@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api-client';
 import { formatVND, formatDateTime } from '../../lib/formatters';
@@ -14,6 +14,12 @@ export const SalesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   // Payment modal state
   const [paymentData, setPaymentData] = useState<{
@@ -131,7 +137,7 @@ export const SalesPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredSales.map((s) => (
+              {filteredSales.slice((page - 1) * pageSize, page * pageSize).map((s) => (
                 <tr key={s.id}>
                   <td data-label="Mã hóa đơn" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                     <button
@@ -204,6 +210,32 @@ export const SalesPage: React.FC = () => {
           </table>
           </div>
         )}
+
+        <div className="table-footer-pagination" aria-label="Phân trang hóa đơn bán hàng">
+          <span>
+            Tổng cộng: <strong>{filteredSales.length}</strong> hóa đơn · Trang {Math.min(page, Math.max(1, Math.ceil(filteredSales.length / pageSize)))} / {Math.max(1, Math.ceil(filteredSales.length / pageSize))}
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Trước
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page >= Math.max(1, Math.ceil(filteredSales.length / pageSize))}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Sau
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Sale Detail & Invoice Drawer */}

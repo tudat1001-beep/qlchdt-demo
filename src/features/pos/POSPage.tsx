@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiClientError } from '../../lib/api-client';
 import { formatVND } from '../../lib/formatters';
@@ -53,6 +53,16 @@ export const POSPage: React.FC = () => {
   const [bankAmount, setBankAmount] = useState<number>(0);
   const [note, setNote] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [devSearchPage, setDevSearchPage] = useState(1);
+  const [prodSearchPage, setProdSearchPage] = useState(1);
+  const [catalogPage, setCatalogPage] = useState(1);
+  const searchPageSize = 5;
+  const catalogPageSize = 10;
+
+  useEffect(() => {
+    setDevSearchPage(1);
+    setProdSearchPage(1);
+  }, [searchQuery]);
 
   // Cart state
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -399,71 +409,22 @@ export const POSPage: React.FC = () => {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {/* Matching Devices (Phones by IMEI) */}
-                    {searchResults.devices?.length > 0 && (
-                      <div>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal-700)', textTransform: 'uppercase', marginBottom: 4 }}>
-                          Thiết bị sẵn sàng bán ({searchResults.devices.length})
-                        </div>
-                        {searchResults.devices.map((dev) => (
-                          <div
-                            key={dev.id}
-                            style={{
-                              padding: '8px 10px',
-                              backgroundColor: 'var(--slate-50)',
-                              border: '1px solid var(--slate-200)',
-                              borderRadius: 'var(--radius-sm)',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              marginBottom: 4,
-                            }}
-                          >
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: '12.5px' }}>
-                                [{dev.sku}] {dev.product_name}
-                              </div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--slate-600)', display: 'flex', gap: 8 }}>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>IMEI: {dev.imei}</span>
-                                <Badge variant={dev.condition === 'NEW' ? 'new' : 'used'}>
-                                  {dev.condition === 'NEW' ? 'Mới' : 'Cũ'}
-                                </Badge>
-                                {dev.battery !== null && <span>Pin: {dev.battery}%</span>}
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: '13px' }}>
-                                {formatVND(dev.sale_price)}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleAddDevice(dev)}
-                              >
-                                <Plus size={13} style={{ marginRight: 2 }} /> Chọn
-                              </Button>
-                            </div>
+                    {searchResults.devices?.length > 0 && (() => {
+                      const totalDevPages = Math.max(1, Math.ceil(searchResults.devices.length / searchPageSize));
+                      const curDevPage = Math.min(Math.max(1, devSearchPage), totalDevPages);
+                      const visibleDevs = searchResults.devices.slice((curDevPage - 1) * searchPageSize, curDevPage * searchPageSize);
+
+                      return (
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal-700)', textTransform: 'uppercase', marginBottom: 4 }}>
+                            Thiết bị sẵn sàng bán ({searchResults.devices.length})
                           </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Matching Products */}
-                    {searchResults.products?.length > 0 && (
-                      <div style={{ marginTop: 6 }}>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--slate-600)', textTransform: 'uppercase', marginBottom: 4 }}>
-                          Mặt hàng ({searchResults.products.length})
-                        </div>
-                        {searchResults.products.map((p) => {
-                          const isPhone = p.kind === 'PHONE';
-                          const availDevices = devicesByProduct.get(p.id) || [];
-
-                          return (
+                          {visibleDevs.map((dev) => (
                             <div
-                              key={p.id}
+                              key={dev.id}
                               style={{
                                 padding: '8px 10px',
-                                backgroundColor: '#ffffff',
+                                backgroundColor: 'var(--slate-50)',
                                 border: '1px solid var(--slate-200)',
                                 borderRadius: 'var(--radius-sm)',
                                 display: 'flex',
@@ -474,41 +435,116 @@ export const POSPage: React.FC = () => {
                             >
                               <div>
                                 <div style={{ fontWeight: 600, fontSize: '12.5px' }}>
-                                  [{p.sku}] {p.name}
+                                  [{dev.sku}] {dev.product_name}
                                 </div>
-                                <div style={{ fontSize: '11.5px', color: 'var(--slate-500)', display: 'flex', gap: 6 }}>
-                                  <Badge variant={isPhone ? 'phone' : 'accessory'}>
-                                    {isPhone ? 'Điện thoại' : 'Phụ kiện'}
+                                <div style={{ fontSize: '11.5px', color: 'var(--slate-600)', display: 'flex', gap: 8 }}>
+                                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>IMEI: {dev.imei}</span>
+                                  <Badge variant={dev.condition === 'NEW' ? 'new' : 'used'}>
+                                    {dev.condition === 'NEW' ? 'Mới' : 'Cũ'}
                                   </Badge>
-                                  <span>Tồn: <strong>{p.stock_quantity}</strong></span>
-                                  {p.brand && <span>Hãng: {p.brand}</span>}
+                                  {dev.battery !== null && <span>Pin: {dev.battery}%</span>}
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontWeight: 600, color: 'var(--slate-800)', fontSize: '13px' }}>
-                                  {formatVND(p.sale_price)}
+                                <span style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: '13px' }}>
+                                  {formatVND(dev.sale_price)}
                                 </span>
-                                {isPhone ? (
-                                  <span style={{ fontSize: '11.5px', color: 'var(--slate-500)' }}>
-                                    {availDevices.length > 0 ? `(${availDevices.length} máy sẵn sàng)` : '(Hết máy)'}
-                                  </span>
-                                ) : (
-                                  <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => handleAddAccessory(p)}
-                                    disabled={(p.stock_quantity ?? 0) <= 0}
-                                  >
-                                    <Plus size={13} style={{ marginRight: 2 }} /> Thêm
-                                  </Button>
-                                )}
+                                <Button
+                                  type="button"
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => handleAddDevice(dev)}
+                                >
+                                  <Plus size={13} style={{ marginRight: 2 }} /> Chọn
+                                </Button>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                          ))}
+                          <div className="compact-pagination" aria-label="Phân trang thiết bị tìm kiếm">
+                            <span>{searchResults.devices.length} máy · Trang {curDevPage} / {totalDevPages}</span>
+                            <div>
+                              <Button type="button" variant="secondary" size="sm" disabled={curDevPage <= 1} onClick={() => setDevSearchPage((p) => Math.max(1, p - 1))}>Trước</Button>
+                              <Button type="button" variant="secondary" size="sm" disabled={curDevPage >= totalDevPages} onClick={() => setDevSearchPage((p) => p + 1)}>Sau</Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Matching Products */}
+                    {searchResults.products?.length > 0 && (() => {
+                      const totalProdPages = Math.max(1, Math.ceil(searchResults.products.length / searchPageSize));
+                      const curProdPage = Math.min(Math.max(1, prodSearchPage), totalProdPages);
+                      const visibleProds = searchResults.products.slice((curProdPage - 1) * searchPageSize, curProdPage * searchPageSize);
+
+                      return (
+                        <div style={{ marginTop: 6 }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--slate-600)', textTransform: 'uppercase', marginBottom: 4 }}>
+                            Mặt hàng ({searchResults.products.length})
+                          </div>
+                          {visibleProds.map((p) => {
+                            const isPhone = p.kind === 'PHONE';
+                            const availDevices = devicesByProduct.get(p.id) || [];
+
+                            return (
+                              <div
+                                key={p.id}
+                                style={{
+                                  padding: '8px 10px',
+                                  backgroundColor: '#ffffff',
+                                  border: '1px solid var(--slate-200)',
+                                  borderRadius: 'var(--radius-sm)',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: 4,
+                                }}
+                              >
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '12.5px' }}>
+                                    [{p.sku}] {p.name}
+                                  </div>
+                                  <div style={{ fontSize: '11.5px', color: 'var(--slate-500)', display: 'flex', gap: 6 }}>
+                                    <Badge variant={isPhone ? 'phone' : 'accessory'}>
+                                      {isPhone ? 'Điện thoại' : 'Phụ kiện'}
+                                    </Badge>
+                                    <span>Tồn: <strong>{p.stock_quantity}</strong></span>
+                                    {p.brand && <span>Hãng: {p.brand}</span>}
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ fontWeight: 600, color: 'var(--slate-800)', fontSize: '13px' }}>
+                                    {formatVND(p.sale_price)}
+                                  </span>
+                                  {isPhone ? (
+                                    <span style={{ fontSize: '11.5px', color: 'var(--slate-500)' }}>
+                                      {availDevices.length > 0 ? `(${availDevices.length} máy sẵn sàng)` : '(Hết máy)'}
+                                    </span>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => handleAddAccessory(p)}
+                                      disabled={(p.stock_quantity ?? 0) <= 0}
+                                    >
+                                      <Plus size={13} style={{ marginRight: 2 }} /> Thêm
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <div className="compact-pagination" aria-label="Phân trang mặt hàng tìm kiếm">
+                            <span>{searchResults.products.length} mặt hàng · Trang {curProdPage} / {totalProdPages}</span>
+                            <div>
+                              <Button type="button" variant="secondary" size="sm" disabled={curProdPage <= 1} onClick={() => setProdSearchPage((p) => Math.max(1, p - 1))}>Trước</Button>
+                              <Button type="button" variant="secondary" size="sm" disabled={curProdPage >= totalProdPages} onClick={() => setProdSearchPage((p) => p + 1)}>Sau</Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -522,7 +558,7 @@ export const POSPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, maxHeight: 420, overflowY: 'auto' }}>
-              {products.map((p) => {
+              {products.slice((catalogPage - 1) * catalogPageSize, catalogPage * catalogPageSize).map((p) => {
                 const isPhone = p.kind === 'PHONE';
                 const availDevices = devicesByProduct.get(p.id) || [];
                 const stockQty = p.stock_quantity ?? 0;
@@ -598,6 +634,14 @@ export const POSPage: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+
+            <div className="compact-pagination" aria-label="Phân trang danh mục hàng hóa">
+              <span>{products.length} mặt hàng · Trang {Math.min(catalogPage, Math.max(1, Math.ceil(products.length / catalogPageSize)))} / {Math.max(1, Math.ceil(products.length / catalogPageSize))}</span>
+              <div>
+                <Button type="button" variant="secondary" size="sm" disabled={catalogPage <= 1} onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}>Trước</Button>
+                <Button type="button" variant="secondary" size="sm" disabled={catalogPage >= Math.max(1, Math.ceil(products.length / catalogPageSize))} onClick={() => setCatalogPage((p) => p + 1)}>Sau</Button>
+              </div>
             </div>
           </div>
         </div>

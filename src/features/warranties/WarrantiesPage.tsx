@@ -25,6 +25,10 @@ export const WarrantiesPage: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, statusFilter]);
+
   const {
     data: warrantiesData,
     isLoading,
@@ -251,7 +255,7 @@ export const WarrantiesPage: React.FC = () => {
                 })}
               </tbody>
             </table>
-            {filteredWarranties.length > pageSize && (
+            {filteredWarranties.length > 0 && (
               <div className="compact-pagination" aria-label="Phân trang hồ sơ bảo hành">
                 <span>{filteredWarranties.length} hồ sơ · Trang {page} / {pageCount}</span>
                 <div>

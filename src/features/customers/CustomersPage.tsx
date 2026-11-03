@@ -24,6 +24,12 @@ export const CustomersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery]);
 
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
@@ -155,7 +161,7 @@ export const CustomersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {customers.map((c) => (
+                {customers.slice((page - 1) * pageSize, page * pageSize).map((c) => (
                   <tr
                     key={c.id}
                     className="row-clickable"
@@ -205,13 +211,30 @@ export const CustomersPage: React.FC = () => {
           </div>
         )}
 
-        <div className="table-footer-pagination">
+        <div className="table-footer-pagination" aria-label="Phân trang khách hàng">
           <span>
-            Tổng cộng: <strong>{customers.length}</strong> khách hàng
+            Tổng cộng: <strong>{customers.length}</strong> khách hàng · Trang {Math.min(page, Math.max(1, Math.ceil(customers.length / pageSize)))} / {Math.max(1, Math.ceil(customers.length / pageSize))}
           </span>
-          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-            Sổ theo dõi khách hàng
-          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Trước
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page >= Math.max(1, Math.ceil(customers.length / pageSize))}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Sau
+            </Button>
+          </div>
         </div>
       </div>
 
