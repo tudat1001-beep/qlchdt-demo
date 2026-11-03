@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../context/ToastContext';
 import { multiplyVnd, sumVnd, allocateDiscount } from '../../../shared/money';
 import type { Product, Device } from '../../types/catalog';
@@ -59,6 +60,28 @@ export const POSPage: React.FC = () => {
   const searchPageSize = 5;
   const catalogPageSize = 10;
 
+  // IMEI Selection Modal state for phone products
+  const [imeiModalProduct, setImeiModalProduct] = useState<Product | null>(null);
+  const [imeiSearchQuery, setImeiSearchQuery] = useState('');
+  const [imeiModalPage, setImeiModalPage] = useState(1);
+  const imeiModalPageSize = 10;
+
+  useEffect(() => {
+    setImeiModalPage(1);
+  }, [imeiModalProduct, imeiSearchQuery]);
+
+  const handleOpenImeiModal = (prod: Product) => {
+    setImeiModalProduct(prod);
+    setImeiSearchQuery('');
+    setImeiModalPage(1);
+  };
+
+  const handleCloseImeiModal = () => {
+    setImeiModalProduct(null);
+    setImeiSearchQuery('');
+    setImeiModalPage(1);
+  };
+
   useEffect(() => {
     setDevSearchPage(1);
     setProdSearchPage(1);
@@ -102,6 +125,24 @@ export const POSPage: React.FC = () => {
     }
     return map;
   }, [devices]);
+
+  // Filtered devices for IMEI selection modal
+  const filteredModalDevices = useMemo(() => {
+    if (!imeiModalProduct) return [];
+    const list = (devicesByProduct.get(imeiModalProduct.id) || []).filter(
+      (d) => !d.status || d.status === 'available'
+    );
+    if (!imeiSearchQuery.trim()) return list;
+    const q = imeiSearchQuery.trim().toLowerCase();
+    return list.filter((d) => d.imei.toLowerCase().includes(q));
+  }, [imeiModalProduct, devicesByProduct, imeiSearchQuery]);
+
+  const totalModalPages = Math.max(1, Math.ceil(filteredModalDevices.length / imeiModalPageSize));
+  const currentModalPage = Math.min(Math.max(1, imeiModalPage), totalModalPages);
+  const visibleModalDevices = filteredModalDevices.slice(
+    (currentModalPage - 1) * imeiModalPageSize,
+    currentModalPage * imeiModalPageSize
+  );
 
   // Filtered search results
   const searchResults = useMemo(() => {
@@ -601,20 +642,15 @@ export const POSPage: React.FC = () => {
 
                       {isPhone ? (
                         availDevices.length > 0 ? (
-                          <Select
-                            value=""
-                            onChange={(e) => {
-                              const dev = availDevices.find((d) => d.id === e.target.value);
-                              if (dev) handleAddDevice(dev);
-                            }}
-                            options={[
-                              { value: '', label: `+ Chọn IMEI (${availDevices.length} máy)` },
-                              ...availDevices.map((d) => ({
-                                value: d.id,
-                                label: `${d.imei} (${d.condition === 'NEW' ? 'Mới' : 'Cũ'}) - ${formatVND(d.sale_price)}`,
-                              })),
-                            ]}
-                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            style={{ width: '100%' }}
+                            onClick={() => handleOpenImeiModal(p)}
+                          >
+                            Chọn IMEI
+                          </Button>
                         ) : (
                           <div style={{ fontSize: '11px', color: 'var(--slate-400)', textAlign: 'center' }}>Hết máy tồn</div>
                         )
@@ -961,6 +997,131 @@ export const POSPage: React.FC = () => {
         isOpen={!!completedSale}
         onClose={() => setCompletedSale(null)}
       />
+
+      {/* IMEI Selection Modal for Phone Products */}
+      <Modal
+        isOpen={!!imeiModalProduct}
+        onClose={handleCloseImeiModal}
+        title={imeiModalProduct ? `Chọn IMEI: ${imeiModalProduct.name}` : 'Chọn IMEI'}
+        maxWidth="640px"
+        footer={
+          <Button type="button" variant="secondary" onClick={handleCloseImeiModal}>
+            Đóng
+          </Button>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Simple IMEI search */}
+          <div style={{ position: 'relative' }}>
+            <Search
+              size={16}
+              style={{
+                position: 'absolute',
+                left: 10,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--slate-400)',
+              }}
+            />
+            <input
+              type="text"
+              className="input"
+              style={{ paddingLeft: 34, height: 38, fontSize: '13.5px', width: '100%' }}
+              placeholder="Tìm kiếm theo số IMEI..."
+              value={imeiSearchQuery}
+              onChange={(e) => setImeiSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          {/* List of currently available devices */}
+          {filteredModalDevices.length === 0 ? (
+            <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--slate-500)', fontSize: '13px' }}>
+              {imeiSearchQuery
+                ? `Không tìm thấy máy nào khớp với "${imeiSearchQuery}"`
+                : 'Không có thiết bị sẵn sàng bán cho sản phẩm này'}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
+              {visibleModalDevices.map((dev) => (
+                <div
+                  key={dev.id}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: 'var(--slate-50)',
+                    border: '1px solid var(--slate-200)',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: '1 1 200px' }}>
+                    <div style={{ fontSize: '12.5px', color: 'var(--slate-700)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '13px', wordBreak: 'break-all' }}>
+                        {dev.imei}
+                      </span>
+                      <Badge variant={dev.condition === 'NEW' ? 'new' : 'used'}>
+                        {dev.condition === 'NEW' ? 'Mới' : 'Cũ'}
+                      </Badge>
+                      {dev.battery !== null && dev.battery !== undefined && (
+                        <span style={{ fontSize: '11.5px', color: 'var(--slate-600)', whiteSpace: 'nowrap' }}>
+                          Pin: {dev.battery}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                      {formatVND(dev.sale_price)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        handleAddDevice(dev);
+                        handleCloseImeiModal();
+                      }}
+                    >
+                      <Plus size={13} style={{ marginRight: 2 }} /> Chọn
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Compact Client-Side Pagination */}
+          {filteredModalDevices.length > 0 && (
+            <div className="compact-pagination" aria-label="Phân trang thiết bị IMEI">
+              <span>{filteredModalDevices.length} máy · Trang {currentModalPage} / {totalModalPages}</span>
+              <div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentModalPage <= 1}
+                  onClick={() => setImeiModalPage((p) => Math.max(1, p - 1))}
+                >
+                  Trước
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentModalPage >= totalModalPages}
+                  onClick={() => setImeiModalPage((p) => p + 1)}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
