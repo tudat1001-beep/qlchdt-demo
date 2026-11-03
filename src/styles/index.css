@@ -1224,6 +1224,8 @@ button, input, select, textarea {
 
 /* Responsive Breakpoints */
 @media (max-width: 768px) {
+  .page-body > * { flex-shrink: 0; }
+
   .modal-overlay { align-items: center; padding: 8px; }
   .modal-card { width: 100%; max-height: calc(100dvh - 16px); border-radius: 12px; }
   .modal-header { flex: 0 0 auto; padding: 12px 14px; }
@@ -1446,16 +1448,21 @@ button, input, select, textarea {
   }
 
   .inventory-tabs {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
   }
 
   .inventory-tabs > button {
-    flex: 0 0 auto;
+    min-width: 0;
     min-height: 48px;
-    white-space: nowrap;
+    padding: 6px 4px !important;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px !important;
+    font-size: 11px !important;
+    text-align: center;
+    white-space: normal;
   }
 
   .pos-layout {
@@ -1521,21 +1528,19 @@ button, input, select, textarea {
   }
 
   .report-tabs {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
     width: 100%;
     max-width: 100%;
   }
 
-  .report-tabs::-webkit-scrollbar {
-    display: none;
-  }
-
   .report-tabs > button {
-    flex: 0 0 auto;
-    white-space: nowrap;
+    min-width: 0;
+    padding: 6px 4px !important;
+    font-size: 11px !important;
+    text-align: center;
+    white-space: normal;
     min-height: 42px;
   }
 
@@ -1597,8 +1602,9 @@ button, input, select, textarea {
   .table-responsive-wrapper.report-table-daily,
   .table-responsive-wrapper.report-table-bestsellers,
   .table-responsive-wrapper.report-table-lowstock {
+    flex: 0 0 auto;
     max-width: 100%;
-    overflow-x: hidden !important;
+    overflow: visible !important;
     border-bottom: none;
   }
 
