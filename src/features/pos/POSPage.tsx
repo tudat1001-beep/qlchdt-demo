@@ -64,6 +64,7 @@ export const POSPage: React.FC = () => {
   const [imeiModalProduct, setImeiModalProduct] = useState<Product | null>(null);
   const [imeiSearchQuery, setImeiSearchQuery] = useState('');
   const [imeiModalPage, setImeiModalPage] = useState(1);
+  const [selectedImeiIds, setSelectedImeiIds] = useState<string[]>([]);
   const imeiModalPageSize = 10;
 
   useEffect(() => {
@@ -74,12 +75,14 @@ export const POSPage: React.FC = () => {
     setImeiModalProduct(prod);
     setImeiSearchQuery('');
     setImeiModalPage(1);
+    setSelectedImeiIds([]);
   };
 
   const handleCloseImeiModal = () => {
     setImeiModalProduct(null);
     setImeiSearchQuery('');
     setImeiModalPage(1);
+    setSelectedImeiIds([]);
   };
 
   useEffect(() => {
@@ -127,15 +130,20 @@ export const POSPage: React.FC = () => {
   }, [devices]);
 
   // Filtered devices for IMEI selection modal
-  const filteredModalDevices = useMemo(() => {
+  const availableModalDevices = useMemo(() => {
     if (!imeiModalProduct) return [];
     const list = (devicesByProduct.get(imeiModalProduct.id) || []).filter(
-      (d) => !d.status || d.status === 'available'
+      (device) => (!device.status || device.status === 'available') &&
+        !cart.some((item) => item.device_id === device.id)
     );
-    if (!imeiSearchQuery.trim()) return list;
+    return list;
+  }, [imeiModalProduct, devicesByProduct, cart]);
+
+  const filteredModalDevices = useMemo(() => {
+    if (!imeiSearchQuery.trim()) return availableModalDevices;
     const q = imeiSearchQuery.trim().toLowerCase();
-    return list.filter((d) => d.imei.toLowerCase().includes(q));
-  }, [imeiModalProduct, devicesByProduct, imeiSearchQuery]);
+    return availableModalDevices.filter((d) => d.imei.toLowerCase().includes(q));
+  }, [availableModalDevices, imeiSearchQuery]);
 
   const totalModalPages = Math.max(1, Math.ceil(filteredModalDevices.length / imeiModalPageSize));
   const currentModalPage = Math.min(Math.max(1, imeiModalPage), totalModalPages);
@@ -143,6 +151,21 @@ export const POSPage: React.FC = () => {
     (currentModalPage - 1) * imeiModalPageSize,
     currentModalPage * imeiModalPageSize
   );
+  const selectedModalDevices = availableModalDevices.filter((device) => selectedImeiIds.includes(device.id));
+  const allVisibleDevicesSelected = visibleModalDevices.length > 0 &&
+    visibleModalDevices.every((device) => selectedImeiIds.includes(device.id));
+
+  const handleToggleVisibleImeiDevices = () => {
+    const visibleIds = visibleModalDevices.map((device) => device.id);
+    setSelectedImeiIds((current) => allVisibleDevicesSelected
+      ? current.filter((id) => !visibleIds.includes(id))
+      : [...new Set([...current, ...visibleIds])]);
+  };
+
+  const handleAddSelectedImeiDevices = () => {
+    selectedModalDevices.forEach(handleAddDevice);
+    handleCloseImeiModal();
+  };
 
   // Filtered search results
   const searchResults = useMemo(() => {
@@ -1005,9 +1028,15 @@ export const POSPage: React.FC = () => {
         title={imeiModalProduct ? `Chọn IMEI: ${imeiModalProduct.name}` : 'Chọn IMEI'}
         maxWidth="640px"
         footer={
-          <Button type="button" variant="secondary" onClick={handleCloseImeiModal}>
-            Đóng
-          </Button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: 'var(--slate-600)' }}>{selectedModalDevices.length} máy đã chọn</span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <Button type="button" variant="secondary" onClick={handleCloseImeiModal}>Đóng</Button>
+              <Button type="button" variant="primary" disabled={selectedModalDevices.length === 0} onClick={handleAddSelectedImeiDevices}>
+                Thêm {selectedModalDevices.length} máy vào giỏ
+              </Button>
+            </div>
+          </div>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1042,55 +1071,43 @@ export const POSPage: React.FC = () => {
                 : 'Không có thiết bị sẵn sàng bán cho sản phẩm này'}
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
-              {visibleModalDevices.map((dev) => (
-                <div
-                  key={dev.id}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: 'var(--slate-50)',
-                    border: '1px solid var(--slate-200)',
-                    borderRadius: 'var(--radius-sm)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: '1 1 200px' }}>
-                    <div style={{ fontSize: '12.5px', color: 'var(--slate-700)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '13px', wordBreak: 'break-all' }}>
-                        {dev.imei}
-                      </span>
-                      <Badge variant={dev.condition === 'NEW' ? 'new' : 'used'}>
-                        {dev.condition === 'NEW' ? 'Mới' : 'Cũ'}
-                      </Badge>
-                      {dev.battery !== null && dev.battery !== undefined && (
-                        <span style={{ fontSize: '11.5px', color: 'var(--slate-600)', whiteSpace: 'nowrap' }}>
-                          Pin: {dev.battery}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: '13px', whiteSpace: 'nowrap' }}>
-                      {formatVND(dev.sale_price)}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        handleAddDevice(dev);
-                        handleCloseImeiModal();
-                      }}
-                    >
-                      <Plus size={13} style={{ marginRight: 2 }} /> Chọn
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="popup-table-wrap" style={{ maxHeight: 420, overflowY: 'auto' }}>
+              <table className="table-misa popup-table" aria-label="Chọn IMEI để bán">
+                <thead>
+                  <tr>
+                    <th style={{ width: 48 }} className="col-center">
+                      <input type="checkbox" aria-label="Chọn tất cả máy trên trang này" style={{ width: 20, height: 20, cursor: 'pointer' }} checked={allVisibleDevicesSelected} onChange={handleToggleVisibleImeiDevices} />
+                    </th>
+                    <th>IMEI</th>
+                    <th style={{ width: 90 }} className="col-center">Tình trạng</th>
+                    <th style={{ width: 80 }} className="col-center">Pin</th>
+                    <th style={{ width: 130 }} className="col-money">Giá bán</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleModalDevices.map((dev) => (
+                    <tr key={dev.id}>
+                      <td data-label="Chọn" className="col-center">
+                        <input
+                          type="checkbox"
+                          aria-label={`Chọn IMEI ${dev.imei}`}
+                          style={{ width: 20, height: 20, cursor: 'pointer' }}
+                          checked={selectedImeiIds.includes(dev.id)}
+                          onChange={() => setSelectedImeiIds((current) => current.includes(dev.id)
+                            ? current.filter((id) => id !== dev.id)
+                            : [...current, dev.id])}
+                        />
+                      </td>
+                      <td data-label="IMEI" className="col-sku">{dev.imei}</td>
+                      <td data-label="Tình trạng" className="col-center">
+                        <Badge variant={dev.condition === 'NEW' ? 'new' : 'used'}>{dev.condition === 'NEW' ? 'Mới' : 'Cũ'}</Badge>
+                      </td>
+                      <td data-label="Pin" className="col-center">{dev.battery !== null && dev.battery !== undefined ? `${dev.battery}%` : '—'}</td>
+                      <td data-label="Giá bán" className="col-money">{formatVND(dev.sale_price)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
