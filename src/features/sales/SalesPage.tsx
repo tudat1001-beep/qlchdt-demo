@@ -133,7 +133,7 @@ export const SalesPage: React.FC = () => {
             <tbody>
               {filteredSales.map((s) => (
                 <tr key={s.id}>
-                  <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                  <td data-label="Mã hóa đơn" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                     <button
                       type="button"
                       onClick={() => handleOpenDetail(s.id)}
@@ -149,20 +149,20 @@ export const SalesPage: React.FC = () => {
                       {s.number}
                     </button>
                   </td>
-                  <td style={{ color: 'var(--slate-600)' }}>{formatDateTime(s.created_at)}</td>
-                  <td style={{ fontWeight: 500 }}>
+                  <td data-label="Thời gian" style={{ color: 'var(--slate-600)' }}>{formatDateTime(s.created_at)}</td>
+                  <td data-label="Khách hàng" style={{ fontWeight: 500 }}>
                     {s.customer_name || <span style={{ color: 'var(--slate-400)', fontStyle: 'italic' }}>Khách lẻ</span>}
                   </td>
-                  <td style={{ textAlign: 'right', color: 'var(--slate-700)' }}>{formatVND(s.subtotal)}</td>
-                  <td style={{ textAlign: 'right', color: s.discount > 0 ? 'var(--danger-600)' : 'var(--slate-400)' }}>
+                  <td data-label="Tiền hàng" style={{ textAlign: 'right', color: 'var(--slate-700)' }}>{formatVND(s.subtotal)}</td>
+                  <td data-label="Chiết khấu" style={{ textAlign: 'right', color: s.discount > 0 ? 'var(--danger-600)' : 'var(--slate-400)' }}>
                     {s.discount > 0 ? `-${formatVND(s.discount)}` : '—'}
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--slate-900)' }}>{formatVND(s.total)}</td>
-                  <td style={{ textAlign: 'right', color: 'var(--success-700)', fontWeight: 500 }}>{formatVND(s.paid)}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 600, color: s.debt > 0 ? 'var(--danger-700)' : 'var(--slate-500)' }}>
+                  <td data-label="Tổng cộng" style={{ textAlign: 'right', fontWeight: 600, color: 'var(--slate-900)' }}>{formatVND(s.total)}</td>
+                  <td data-label="Đã thu" style={{ textAlign: 'right', color: 'var(--success-700)', fontWeight: 500 }}>{formatVND(s.paid)}</td>
+                  <td data-label="Còn nợ" style={{ textAlign: 'right', fontWeight: 600, color: s.debt > 0 ? 'var(--danger-700)' : 'var(--slate-500)' }}>
                     {formatVND(s.debt)}
                   </td>
-                  <td style={{ textAlign: 'center' }}>
+                  <td data-label="Trạng thái" style={{ textAlign: 'center' }}>
                     {s.status === 'posted' || s.status === 'completed' ? (
                       <Badge variant="available">Hoàn thành</Badge>
                     ) : s.status === 'partially_returned' ? (
@@ -175,7 +175,7 @@ export const SalesPage: React.FC = () => {
                       <Badge variant="default">{s.status}</Badge>
                     )}
                   </td>
-                  <td style={{ textAlign: 'center' }}>
+                  <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
                       <Button
                         variant="ghost"

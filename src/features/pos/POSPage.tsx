@@ -782,11 +782,11 @@ export const POSPage: React.FC = () => {
 
           {/* Payment breakdown */}
           <div style={{ borderTop: '1px solid var(--slate-200)', paddingTop: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
               <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--slate-800)' }}>
                 Khách thanh toán
               </span>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
                   onClick={handlePayFullCash}

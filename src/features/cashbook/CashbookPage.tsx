@@ -344,7 +344,7 @@ export const CashbookPage: React.FC = () => {
 
       {/* Table Card */}
       <div className="table-card" style={{ marginTop: 14 }}>
-        <div className="table-responsive-wrapper">
+        <div className="table-responsive-wrapper cashbook-table-wrapper">
           <table className="table-misa" data-testid="cashbook-table">
             <thead>
               <tr>
@@ -380,11 +380,11 @@ export const CashbookPage: React.FC = () => {
                   const isIncome = item.direction === 'in';
                   return (
                     <tr key={item.id}>
-                      <td className="col-sku" title={item.id}>
+                      <td data-label="Mã giao dịch" className="col-sku" title={item.id}>
                         {item.id.slice(0, 8)}…
                       </td>
-                      <td style={{ fontSize: '12px' }}>{formatDateTime(item.created_at)}</td>
-                      <td className="col-center">
+                      <td data-label="Thời gian" style={{ fontSize: '12px' }}>{formatDateTime(item.created_at)}</td>
+                      <td data-label="Loại phiếu" className="col-center">
                         {isIncome ? (
                           <span
                             className="badge badge-success"
@@ -401,24 +401,24 @@ export const CashbookPage: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      <td>
+                      <td data-label="Hình thức">
                         <span style={{ fontSize: '13px' }}>
                           {item.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
                         </span>
                       </td>
-                      <td className="col-money" style={{ color: isIncome ? 'var(--emerald-600)' : 'var(--slate-400)' }}>
+                      <td data-label="Thu vào" className="col-money" style={{ color: isIncome ? 'var(--emerald-600)' : 'var(--slate-400)' }}>
                         {isIncome ? `+${formatVND(item.amount)}` : '—'}
                       </td>
-                      <td className="col-money" style={{ color: !isIncome ? 'var(--rose-600)' : 'var(--slate-400)' }}>
+                      <td data-label="Chi ra" className="col-money" style={{ color: !isIncome ? 'var(--rose-600)' : 'var(--slate-400)' }}>
                         {!isIncome ? `-${formatVND(item.amount)}` : '—'}
                       </td>
-                      <td>
+                      <td data-label="Danh mục">
                         <span style={{ fontSize: '13px', fontWeight: 500 }}>
                           {CATEGORY_NAMES[item.category] || item.category}
                         </span>
                       </td>
-                      <td style={{ fontSize: '13px', color: 'var(--slate-700)' }}>{item.note || '—'}</td>
-                      <td className="col-sku" title={item.reference_id || ''}>
+                      <td data-label="Diễn giải" style={{ fontSize: '13px', color: 'var(--slate-700)' }}>{item.note || '—'}</td>
+                      <td data-label="Chứng từ gốc" className="col-sku" title={item.reference_id || ''}>
                         {item.reference_id ? item.reference_id.slice(0, 8) + '…' : '—'}
                       </td>
                     </tr>

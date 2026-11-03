@@ -142,7 +142,7 @@ export const CustomersPage: React.FC = () => {
             onAction={handleCreate}
           />
         ) : (
-          <div className="table-responsive-wrapper">
+          <div className="table-responsive-wrapper customers-table-wrapper">
             <table className="table-misa" aria-label="Bảng danh sách khách hàng">
               <thead>
                 <tr>
@@ -162,18 +162,18 @@ export const CustomersPage: React.FC = () => {
                     onClick={() => handleOpenDetail(c.id)}
                     title="Nhấn để xem chi tiết lịch sử khách hàng"
                   >
-                    <td>
+                    <td data-label="Họ và tên">
                       <div style={{ fontWeight: 600, color: '#0f172a' }}>{c.name}</div>
                     </td>
-                    <td>{formatPhone(c.phone)}</td>
-                    <td style={{ color: '#475569' }}>{c.address || '—'}</td>
-                    <td className="col-money">
+                    <td data-label="Số điện thoại">{formatPhone(c.phone)}</td>
+                    <td data-label="Địa chỉ" style={{ color: '#475569' }}>{c.address || '—'}</td>
+                    <td data-label="Công nợ" className="col-money">
                       <span style={{ color: (c.debt || 0) > 0 ? '#dc2626' : '#15803d' }}>
                         {formatVND(c.debt)}
                       </span>
                     </td>
-                    <td style={{ fontSize: '12px', color: '#64748b' }}>{c.note || '—'}</td>
-                    <td className="col-center" onClick={(e) => e.stopPropagation()}>
+                    <td data-label="Ghi chú" style={{ fontSize: '12px', color: '#64748b' }}>{c.note || '—'}</td>
+                    <td data-label="Thao tác" className="col-center" onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'inline-flex', gap: 4 }}>
                         <Button
                           type="button"

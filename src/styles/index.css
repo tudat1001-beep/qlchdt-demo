@@ -1319,7 +1319,9 @@ button, input, select, textarea {
 
   .app-header .page-title {
     font-size: 14px;
-    max-width: 140px;
+    max-width: none;
+    flex: 1 1 auto;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1518,8 +1520,56 @@ button, input, select, textarea {
     white-space: nowrap;
   }
 
+  .report-tabs {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .report-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .report-tabs > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 42px;
+  }
+
+  .report-toolbar-card {
+    padding: 10px;
+  }
+
+  .report-toolbar-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-toolbar-group .report-date-range {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    width: 100% !important;
+    margin-left: 0 !important;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .report-toolbar-group .report-date-range input {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 13px !important;
+    padding-inline: 4px !important;
+  }
+
   .table-responsive-wrapper {
-    max-width: calc(100vw - 28px);
+    max-width: 100%;
+    overflow-x: auto;
     overscroll-behavior-x: contain;
     border-bottom: 1px solid var(--slate-300);
   }
@@ -1538,10 +1588,30 @@ button, input, select, textarea {
     pointer-events: none;
   }
 
+  .table-responsive-wrapper.products-table,
+  .table-responsive-wrapper.sales-table,
+  .table-responsive-wrapper.inventory-table,
+  .table-responsive-wrapper.cashbook-table-wrapper,
+  .table-responsive-wrapper.customers-table-wrapper,
+  .table-responsive-wrapper.suppliers-table-wrapper,
+  .table-responsive-wrapper.report-table-daily,
+  .table-responsive-wrapper.report-table-bestsellers,
+  .table-responsive-wrapper.report-table-lowstock {
+    max-width: 100%;
+    overflow-x: hidden !important;
+    border-bottom: none;
+  }
+
   .table-responsive-wrapper.products-table::after,
   .table-responsive-wrapper.sales-table::after,
-  .table-responsive-wrapper.inventory-table::after {
-    content: none;
+  .table-responsive-wrapper.inventory-table::after,
+  .table-responsive-wrapper.cashbook-table-wrapper::after,
+  .table-responsive-wrapper.customers-table-wrapper::after,
+  .table-responsive-wrapper.suppliers-table-wrapper::after,
+  .table-responsive-wrapper.report-table-daily::after,
+  .table-responsive-wrapper.report-table-bestsellers::after,
+  .table-responsive-wrapper.report-table-lowstock::after {
+    content: none !important;
   }
 
   .table-misa {
@@ -1556,64 +1626,736 @@ button, input, select, textarea {
     overflow-wrap: anywhere;
   }
 
-  .products-table .table-misa th:nth-child(3),
-  .products-table .table-misa td:nth-child(3),
-  .products-table .table-misa th:nth-child(4),
-  .products-table .table-misa td:nth-child(4),
-  .products-table .table-misa th:nth-child(5),
-  .products-table .table-misa td:nth-child(5),
-  .products-table .table-misa th:nth-child(7),
-  .products-table .table-misa td:nth-child(7),
-  .inventory-table-purchases .table-misa th:nth-child(2),
-  .inventory-table-purchases .table-misa td:nth-child(2),
-  .inventory-table-purchases .table-misa th:nth-child(4),
-  .inventory-table-purchases .table-misa td:nth-child(4),
-  .inventory-table-purchases .table-misa th:nth-child(6),
-  .inventory-table-purchases .table-misa td:nth-child(6),
-  .inventory-table-movements .table-misa th:first-child,
-  .inventory-table-movements .table-misa td:first-child,
-  .inventory-table-movements .table-misa th:last-child,
-  .inventory-table-movements .table-misa td:last-child,
-  .sales-table .table-misa th:nth-child(2),
-  .sales-table .table-misa td:nth-child(2),
-  .sales-table .table-misa th:nth-child(4),
-  .sales-table .table-misa td:nth-child(4),
-  .sales-table .table-misa th:nth-child(5),
-  .sales-table .table-misa td:nth-child(5),
-  .sales-table .table-misa th:nth-child(7),
-  .sales-table .table-misa td:nth-child(7) {
-    display: none;
+  /* Products Mobile Card View */
+  .products-table .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .products-table .table-misa thead {
+    display: none !important;
+  }
+  .products-table .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 2px 0;
+  }
+  .products-table .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px 10px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    align-items: center;
+  }
+  .products-table td:nth-child(1) { /* SKU */
+    grid-column: 1 / 2;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--slate-500);
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    white-space: nowrap !important;
+  }
+  .products-table td:nth-child(3) { /* Phân loại Badge */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .products-table td:nth-child(2) { /* Tên sản phẩm */
+    grid-column: 1 / -1;
+    display: block !important;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    overflow-wrap: anywhere;
+  }
+  .products-table td:nth-child(4),
+  .products-table td:nth-child(5),
+  .products-table td:nth-child(7) {
+    display: none !important;
+  }
+  .products-table td:nth-child(6) { /* Giá bán */
+    grid-column: 1 / 2;
+    display: flex !important;
+    flex-direction: column;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 14.5px !important;
+    font-weight: 700;
+    color: var(--teal-700) !important;
+    text-align: left !important;
+  }
+  .products-table td:nth-child(6)::before {
+    content: 'Giá bán';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .products-table td:nth-child(8) { /* Tồn kho */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right !important;
+  }
+  .products-table td:nth-child(8)::before {
+    content: 'Tồn kho';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .products-table td:nth-child(9) { /* Thao tác */
+    grid-column: 1 / -1;
+    display: flex !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--slate-200) !important;
+    border-bottom: none !important;
+    min-height: auto !important;
+    width: 100% !important;
+  }
+  .products-table td:nth-child(9) > div {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .products-table td:nth-child(9) button {
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+    min-height: 38px !important;
   }
 
-  .products-table .table-misa th:nth-child(1),
-  .products-table .table-misa td:nth-child(1) { width: 22% !important; }
-  .products-table .table-misa th:nth-child(2),
-  .products-table .table-misa td:nth-child(2) { display: table-cell !important; width: 34% !important; }
-  .products-table .table-misa th:nth-child(6),
-  .products-table .table-misa td:nth-child(6) { width: 22% !important; }
-  .products-table .table-misa th:nth-child(8),
-  .products-table .table-misa td:nth-child(8) { width: 10% !important; }
-  .products-table .table-misa th:nth-child(9),
-  .products-table .table-misa td:nth-child(9) { width: 12% !important; }
+  /* Sales Mobile Card View */
+  .sales-table .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .sales-table .table-misa thead {
+    display: none !important;
+  }
+  .sales-table .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 2px 0;
+  }
+  .sales-table .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px 10px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .sales-table td:nth-child(1) { /* Mã hóa đơn */
+    grid-column: 1 / 2;
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 13px;
+  }
+  .sales-table td:nth-child(9) { /* Trạng thái */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .sales-table td:nth-child(3) { /* Khách hàng */
+    grid-column: 1 / 2;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .sales-table td:nth-child(2) { /* Thời gian */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 11px;
+    color: var(--slate-500) !important;
+  }
+  .sales-table td:nth-child(4),
+  .sales-table td:nth-child(5),
+  .sales-table td:nth-child(7) {
+    display: none !important;
+  }
+  .sales-table td:nth-child(6) { /* Tổng cộng */
+    grid-column: 1 / 2;
+    display: flex !important;
+    flex-direction: column;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 14.5px !important;
+    font-weight: 700;
+    color: var(--slate-900) !important;
+    text-align: left !important;
+  }
+  .sales-table td:nth-child(6)::before {
+    content: 'Tổng thanh toán';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .sales-table td:nth-child(8) { /* Còn nợ */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 13px !important;
+    font-weight: 700;
+    text-align: right !important;
+  }
+  .sales-table td:nth-child(8)::before {
+    content: 'Còn nợ';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .sales-table td:nth-child(10) { /* Thao tác */
+    grid-column: 1 / -1;
+    display: flex !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--slate-200) !important;
+    border-bottom: none !important;
+    min-height: auto !important;
+    width: 100% !important;
+  }
+  .sales-table td:nth-child(10) > div {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .sales-table td:nth-child(10) button {
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+    min-height: 38px !important;
+  }
 
-  .table-misa th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    padding: 10px 9px;
+  /* Purchases Tab 1 Mobile Card View */
+  .inventory-table-purchases .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .inventory-table-purchases .table-misa thead {
+    display: none !important;
+  }
+  .inventory-table-purchases .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 2px 0;
+  }
+  .inventory-table-purchases .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px 10px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .inventory-table-purchases td:nth-child(1) { /* Mã phiếu */
+    grid-column: 1 / 2;
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 13px;
+  }
+  .inventory-table-purchases td:nth-child(8) { /* Trạng thái */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .inventory-table-purchases td:nth-child(3) { /* Nhà cung cấp */
+    grid-column: 1 / 2;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .inventory-table-purchases td:nth-child(2) { /* Thời gian */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 11px;
+    color: var(--slate-500) !important;
+  }
+  .inventory-table-purchases td:nth-child(4),
+  .inventory-table-purchases td:nth-child(6) {
+    display: none !important;
+  }
+  .inventory-table-purchases td:nth-child(5) { /* Tổng tiền */
+    grid-column: 1 / 2;
+    display: flex !important;
+    flex-direction: column;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 14.5px !important;
+    font-weight: 700;
+    color: var(--slate-900) !important;
+    text-align: left !important;
+  }
+  .inventory-table-purchases td:nth-child(5)::before {
+    content: 'Tổng tiền nhập';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .inventory-table-purchases td:nth-child(7) { /* Còn nợ */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    font-size: 13px !important;
+    font-weight: 700;
+    text-align: right !important;
+  }
+  .inventory-table-purchases td:nth-child(7)::before {
+    content: 'Còn nợ NCC';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .inventory-table-purchases td:nth-child(9) { /* Thao tác */
+    grid-column: 1 / -1;
+    display: flex !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--slate-200) !important;
+    border-bottom: none !important;
+    min-height: auto !important;
+    width: 100% !important;
+  }
+  .inventory-table-purchases td:nth-child(9) > div {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .inventory-table-purchases td:nth-child(9) button {
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+    min-height: 38px !important;
+  }
+
+  /* Purchases Tab 2 (Movements) Mobile Card View */
+  .inventory-table-movements .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .inventory-table-movements .table-misa thead {
+    display: none !important;
+  }
+  .inventory-table-movements .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .inventory-table-movements .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+  }
+  .inventory-table-movements td {
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .inventory-table-movements td:nth-child(2) { /* Sản phẩm */
+    grid-column: 1 / 2;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  .inventory-table-movements td:nth-child(6) { /* Nghiệp vụ */
+    grid-column: 2 / 3;
+    justify-self: end;
+  }
+  .inventory-table-movements td:nth-child(3) { /* IMEI / Lô */
+    grid-column: 1 / 2;
+    font-size: 11.5px;
+    color: var(--slate-600);
+  }
+  .inventory-table-movements td:nth-child(1) { /* Thời gian */
+    grid-column: 2 / 3;
+    justify-self: end;
+    font-size: 11px;
+    color: var(--slate-500);
+  }
+  .inventory-table-movements td:nth-child(4) { /* Số lượng */
+    grid-column: 1 / 2;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .inventory-table-movements td:nth-child(5) { /* Giá vốn */
+    grid-column: 2 / 3;
+    justify-self: end;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .inventory-table-movements td:nth-child(7) { /* Ghi chú */
+    grid-column: 1 / -1;
+    font-size: 11.5px;
+    color: var(--slate-500);
+    border-top: 1px dashed var(--slate-100) !important;
+    padding-top: 4px !important;
+  }
+
+  /* Purchases Tab 3 (Devices) Mobile Card View */
+  .inventory-table-devices .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .inventory-table-devices .table-misa thead {
+    display: none !important;
+  }
+  .inventory-table-devices .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .inventory-table-devices .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+  }
+  .inventory-table-devices td {
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .inventory-table-devices td:nth-child(1) { /* IMEI */
+    grid-column: 1 / 2;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .inventory-table-devices td:nth-child(6) { /* Trạng thái */
+    grid-column: 2 / 3;
+    justify-self: end;
+  }
+  .inventory-table-devices td:nth-child(2) { /* Sản phẩm */
+    grid-column: 1 / -1;
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .inventory-table-devices td:nth-child(4) { /* Tình trạng */
+    grid-column: 1 / 2;
+  }
+  .inventory-table-devices td:nth-child(8) { /* Giá bán NY */
+    grid-column: 2 / 3;
+    justify-self: end;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  .inventory-table-devices td:nth-child(3),
+  .inventory-table-devices td:nth-child(5),
+  .inventory-table-devices td:nth-child(7) {
+    display: none !important;
+  }
+
+  /* Cashbook Mobile Card View */
+  .cashbook-table-wrapper .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .cashbook-table-wrapper .table-misa thead {
+    display: none !important;
+  }
+  .cashbook-table-wrapper .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cashbook-table-wrapper .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .cashbook-table-wrapper td {
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .cashbook-table-wrapper td:nth-child(3) { /* Loại phiếu (Thu/Chi) */
+    grid-column: 1 / 2;
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+  }
+  .cashbook-table-wrapper td:nth-child(5) { /* Thu vào */
+    grid-column: 2 / 3;
+    justify-self: end;
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+  .cashbook-table-wrapper td:nth-child(6) { /* Chi ra */
+    grid-column: 2 / 3;
+    justify-self: end;
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+  .cashbook-table-wrapper td:nth-child(7) { /* Danh mục */
+    grid-column: 1 / 2;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slate-800);
+  }
+  .cashbook-table-wrapper td:nth-child(2) { /* Thời gian */
+    grid-column: 2 / 3;
+    justify-self: end;
+    font-size: 11px;
+    color: var(--slate-500);
+  }
+  .cashbook-table-wrapper td:nth-child(4) { /* Hình thức TM/CK */
+    grid-column: 1 / 2;
+    font-size: 11.5px;
+    color: var(--slate-600);
+  }
+  .cashbook-table-wrapper td:nth-child(8) { /* Diễn giải */
+    grid-column: 1 / -1;
     font-size: 12px;
+    color: var(--slate-600);
+    border-top: 1px dashed var(--slate-100) !important;
+    padding-top: 4px !important;
+  }
+  .cashbook-table-wrapper td:nth-child(1),
+  .cashbook-table-wrapper td:nth-child(9) {
+    display: none !important;
   }
 
-  .table-misa td {
-    padding: 10px 9px;
-    min-height: 44px;
+  /* Customers & Suppliers Mobile Card View */
+  .customers-table-wrapper .table-misa,
+  .suppliers-table-wrapper .table-misa {
+    display: block;
+    width: 100% !important;
+  }
+  .customers-table-wrapper .table-misa thead,
+  .suppliers-table-wrapper .table-misa thead {
+    display: none !important;
+  }
+  .customers-table-wrapper .table-misa tbody,
+  .suppliers-table-wrapper .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .customers-table-wrapper .table-misa tr,
+  .suppliers-table-wrapper .table-misa tr {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 6px 10px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .customers-table-wrapper td,
+  .suppliers-table-wrapper td {
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+  }
+  .customers-table-wrapper td:nth-child(1),
+  .suppliers-table-wrapper td:nth-child(1) { /* Tên */
+    grid-column: 1 / 2;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .customers-table-wrapper td:nth-child(4),
+  .suppliers-table-wrapper td:nth-child(4) { /* Công nợ */
+    grid-column: 2 / 3;
+    justify-self: end;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .customers-table-wrapper td:nth-child(4)::before {
+    content: 'Công nợ';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .suppliers-table-wrapper td:nth-child(4)::before {
+    content: 'Nợ phải trả';
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-400);
+    text-transform: uppercase;
+  }
+  .customers-table-wrapper td:nth-child(2),
+  .suppliers-table-wrapper td:nth-child(2) { /* SĐT */
+    grid-column: 1 / 2;
+    font-size: 12.5px;
+    color: var(--teal-700);
+    font-weight: 500;
+  }
+  .customers-table-wrapper td:nth-child(3),
+  .suppliers-table-wrapper td:nth-child(3) { /* Địa chỉ */
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: var(--slate-600);
+  }
+  .customers-table-wrapper td:nth-child(5),
+  .suppliers-table-wrapper td:nth-child(5) {
+    display: none !important;
+  }
+  .customers-table-wrapper td:nth-child(6),
+  .suppliers-table-wrapper td:nth-child(6) { /* Thao tác */
+    grid-column: 1 / -1;
+    display: flex !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--slate-200) !important;
+    width: 100% !important;
+  }
+  .customers-table-wrapper td:nth-child(6) > div,
+  .suppliers-table-wrapper td:nth-child(6) > div {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .customers-table-wrapper td:nth-child(6) button,
+  .suppliers-table-wrapper td:nth-child(6) button {
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+    min-height: 38px !important;
   }
 
-  .table-misa th:first-child,
-  .table-misa td:first-child {
-    position: static;
-    box-shadow: none;
+  /* Reports Tables Mobile Card Views */
+  .report-table-daily .table-misa,
+  .report-table-bestsellers .table-misa,
+  .report-table-lowstock .table-misa {
+    display: block;
+    width: 100% !important;
   }
+  .report-table-daily .table-misa thead,
+  .report-table-bestsellers .table-misa thead,
+  .report-table-lowstock .table-misa thead {
+    display: none !important;
+  }
+  .report-table-daily .table-misa tbody,
+  .report-table-bestsellers .table-misa tbody,
+  .report-table-lowstock .table-misa tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .report-table-daily .table-misa tr,
+  .report-table-bestsellers .table-misa tr,
+  .report-table-lowstock .table-misa tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px 12px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .report-table-daily td,
+  .report-table-bestsellers td,
+  .report-table-lowstock td {
+    display: flex !important;
+    flex-direction: column;
+    padding: 0 !important;
+    border: none !important;
+    min-height: auto !important;
+    text-align: left !important;
+  }
+  .report-table-daily td::before,
+  .report-table-bestsellers td::before,
+  .report-table-lowstock td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .report-table-daily td:first-child,
+  .report-table-bestsellers td:nth-child(3),
+  .report-table-lowstock td:nth-child(2) {
+    grid-column: 1 / -1;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+
 
   .devices-modal-list,
   .devices-modal-table,
@@ -1709,7 +2451,9 @@ button, input, select, textarea {
   .modal-footer > div > .btn { flex: 1 1 auto; justify-content: center; min-height: 44px; }
 
   .app-header .page-title {
-    max-width: 110px;
+    max-width: none;
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: 13px;
   }
 

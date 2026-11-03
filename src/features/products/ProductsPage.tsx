@@ -306,20 +306,20 @@ export const ProductsPage: React.FC = () => {
 
                   return (
                     <tr key={prod.id}>
-                      <td className="col-sku">{prod.sku}</td>
-                      <td>
+                      <td className="col-sku" data-label="Mã SKU">{prod.sku}</td>
+                      <td data-label="Tên sản phẩm">
                         <div style={{ fontWeight: 600, color: '#0f172a' }}>{prod.name}</div>
                         {prod.variant && (
                           <div style={{ fontSize: '11px', color: '#64748b' }}>Bản: {prod.variant}</div>
                         )}
                       </td>
-                      <td className="col-center">
+                      <td className="col-center" data-label="Phân loại">
                         <Badge variant={prod.kind === 'PHONE' ? 'phone' : 'accessory'}>
                           {prod.kind === 'PHONE' ? 'Điện thoại' : 'Phụ kiện'}
                         </Badge>
                       </td>
-                      <td>{prod.brand || '—'}</td>
-                      <td>
+                      <td data-label="Thương hiệu">{prod.brand || '—'}</td>
+                      <td data-label="Dòng / Thuộc tính">
                         <div>{prod.model || '—'}</div>
                         {(prod.color || prod.storage) && (
                           <div style={{ fontSize: '11px', color: '#64748b' }}>
@@ -327,11 +327,11 @@ export const ProductsPage: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="col-money">{formatVND(prod.sale_price)}</td>
-                      <td className="col-num" style={{ color: '#64748b' }}>
+                      <td className="col-money" data-label="Giá bán">{formatVND(prod.sale_price)}</td>
+                      <td className="col-num" data-label="Tồn tối thiểu" style={{ color: '#64748b' }}>
                         {formatNumber(prod.min_stock)}
                       </td>
-                      <td className="col-num">
+                      <td className="col-num" data-label="Tồn kho">
                         <span
                           style={{
                             fontWeight: 700,
@@ -341,7 +341,7 @@ export const ProductsPage: React.FC = () => {
                           {formatNumber(prod.stock_quantity || 0)}
                         </span>
                       </td>
-                      <td className="col-center">
+                      <td className="col-center" data-label="Thao tác">
                         <div style={{ display: 'inline-flex', gap: 4 }}>
                           <Button
                             type="button"
@@ -366,6 +366,7 @@ export const ProductsPage: React.FC = () => {
                               style={{ color: '#0f766e', padding: '4px 6px' }}
                             >
                               <Smartphone size={14} />
+                              <span>IMEI</span>
                             </Button>
                           )}
                         </div>

@@ -305,7 +305,7 @@ export const PurchasesPage: React.FC = () => {
               <tbody>
                 {filteredPurchases.map((p) => (
                   <tr key={p.id}>
-                    <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                    <td data-label="Mã phiếu" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                       <button
                         type="button"
                         onClick={() => handleOpenDetail(p.id)}
@@ -321,18 +321,18 @@ export const PurchasesPage: React.FC = () => {
                         {p.number}
                       </button>
                     </td>
-                    <td style={{ color: 'var(--slate-600)' }}>{formatDateTime(p.created_at)}</td>
-                    <td style={{ fontWeight: 500 }}>{p.supplier_name}</td>
-                    <td style={{ textAlign: 'right', color: 'var(--slate-600)' }}>{formatVND(p.extra_cost)}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--slate-900)' }}>{formatVND(p.total)}</td>
-                    <td style={{ textAlign: 'right', color: 'var(--success-700)', fontWeight: 500 }}>{formatVND(p.paid)}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: p.debt > 0 ? 'var(--danger-700)' : 'var(--slate-500)' }}>
+                    <td data-label="Thời gian" style={{ color: 'var(--slate-600)' }}>{formatDateTime(p.created_at)}</td>
+                    <td data-label="Nhà cung cấp" style={{ fontWeight: 500 }}>{p.supplier_name}</td>
+                    <td data-label="Chi phí mua" style={{ textAlign: 'right', color: 'var(--slate-600)' }}>{formatVND(p.extra_cost)}</td>
+                    <td data-label="Tổng tiền" style={{ textAlign: 'right', fontWeight: 600, color: 'var(--slate-900)' }}>{formatVND(p.total)}</td>
+                    <td data-label="Đã trả" style={{ textAlign: 'right', color: 'var(--success-700)', fontWeight: 500 }}>{formatVND(p.paid)}</td>
+                    <td data-label="Còn nợ" style={{ textAlign: 'right', fontWeight: 600, color: p.debt > 0 ? 'var(--danger-700)' : 'var(--slate-500)' }}>
                       {formatVND(p.debt)}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Trạng thái" style={{ textAlign: 'center' }}>
                       <Badge variant="available">Đã nhập kho</Badge>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Thao tác" style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
                         <Button
                           variant="ghost"
@@ -395,27 +395,27 @@ export const PurchasesPage: React.FC = () => {
                   const isPositive = m.quantity > 0;
                   return (
                     <tr key={m.id}>
-                      <td style={{ color: 'var(--slate-600)' }}>{formatDateTime(m.created_at)}</td>
-                      <td style={{ fontWeight: 500 }}>{m.product_name}</td>
-                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                      <td data-label="Thời gian" style={{ color: 'var(--slate-600)' }}>{formatDateTime(m.created_at)}</td>
+                      <td data-label="Sản phẩm" style={{ fontWeight: 500 }}>{m.product_name}</td>
+                      <td data-label="IMEI / Lô" style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
                         {m.imei || (m.lot_id ? `Lô: ${m.lot_id.slice(0, 8)}` : '—')}
                       </td>
-                      <td style={{ textAlign: 'center', fontWeight: 600 }}>
+                      <td data-label="Số lượng" style={{ textAlign: 'center', fontWeight: 600 }}>
                         <span style={{ color: isPositive ? 'var(--success-700)' : 'var(--danger-700)' }}>
                           {isPositive ? `+${m.quantity}` : m.quantity}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 500 }}>
+                      <td data-label="Giá vốn" style={{ textAlign: 'right', fontWeight: 500 }}>
                         <span style={{ color: isPositive ? 'var(--slate-800)' : 'var(--slate-500)' }}>
                           {formatVND(m.cost)}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td data-label="Nghiệp vụ" style={{ textAlign: 'center' }}>
                         <Badge variant={m.reference_type === 'purchase' ? 'default' : 'phone'}>
                           {m.reference_type === 'purchase' ? 'Nhập hàng' : 'Bán hàng'}
                         </Badge>
                       </td>
-                      <td style={{ color: 'var(--slate-500)', fontSize: '12px' }}>
+                      <td data-label="Ghi chú" style={{ color: 'var(--slate-500)', fontSize: '12px' }}>
                         {m.note || '—'}
                       </td>
                     </tr>
@@ -458,25 +458,25 @@ export const PurchasesPage: React.FC = () => {
               <tbody>
                 {filteredDevices.map((d) => (
                   <tr key={d.id}>
-                    <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{d.imei}</td>
-                    <td style={{ fontWeight: 500 }}>{d.product_name}</td>
-                    <td style={{ color: 'var(--slate-600)', fontFamily: 'var(--font-mono)' }}>{d.sku}</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Số IMEI" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{d.imei}</td>
+                    <td data-label="Sản phẩm" style={{ fontWeight: 500 }}>{d.product_name}</td>
+                    <td data-label="Mã SKU" style={{ color: 'var(--slate-600)', fontFamily: 'var(--font-mono)' }}>{d.sku}</td>
+                    <td data-label="Tình trạng" style={{ textAlign: 'center' }}>
                       <Badge variant={d.condition === 'NEW' ? 'new' : 'used'}>
                         {d.condition === 'NEW' ? 'Mới' : 'Cũ (Lướt)'}
                       </Badge>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Pin (%)" style={{ textAlign: 'center' }}>
                       {d.battery !== null ? `${d.battery}%` : '—'}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Trạng thái" style={{ textAlign: 'center' }}>
                       {d.status === 'available' && <Badge variant="available">Sẵn sàng bán</Badge>}
                       {d.status === 'sold' && <Badge variant="sold">Đã bán</Badge>}
                       {d.status === 'quarantine' && <Badge variant="quarantine">Cách ly / Lỗi</Badge>}
                       {d.status === 'returned_supplier' && <Badge variant="used">Đã trả NCC</Badge>}
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 500 }}>{formatVND(d.cost)}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--teal-700)' }}>{formatVND(d.sale_price)}</td>
+                    <td data-label="Giá vốn" style={{ textAlign: 'right', fontWeight: 500 }}>{formatVND(d.cost)}</td>
+                    <td data-label="Giá bán NY" style={{ textAlign: 'right', fontWeight: 600, color: 'var(--teal-700)' }}>{formatVND(d.sale_price)}</td>
                   </tr>
                 ))}
               </tbody>

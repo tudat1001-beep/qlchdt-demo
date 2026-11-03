@@ -105,8 +105,8 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Date Range Selector Toolbar */}
-      <div className="toolbar-card" style={{ marginBottom: 14 }}>
-        <div className="toolbar-group">
+      <div className="toolbar-card report-toolbar-card" style={{ marginBottom: 14 }}>
+        <div className="toolbar-group report-toolbar-group">
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px', fontWeight: 600, color: 'var(--slate-700)' }}>
             <Calendar size={15} color="var(--slate-500)" />
             <span>Kỳ báo cáo:</span>
@@ -487,7 +487,7 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Tabs navigation */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--slate-200)', gap: 8, marginBottom: 14 }}>
+      <div className="report-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--slate-200)', gap: 8, marginBottom: 14 }}>
         <button
           type="button"
           className={`btn ${activeTab === 'daily' ? 'btn-primary' : 'btn-ghost'}`}
@@ -522,7 +522,7 @@ export const ReportsPage: React.FC = () => {
       {/* Tab 1: Doanh thu theo ngày */}
       {activeTab === 'daily' && (
         <div className="table-card">
-          <div className="table-responsive-wrapper">
+          <div className="table-responsive-wrapper report-table-daily">
             <table className="table-misa" data-testid="daily-report-table">
               <thead>
                 <tr>
@@ -552,14 +552,15 @@ export const ReportsPage: React.FC = () => {
                 ) : (
                   data.daily.map((row) => (
                     <tr key={row.date}>
-                      <td style={{ fontWeight: 600 }}>{row.date}</td>
-                      <td className="col-money" style={{ color: 'var(--teal-700)' }}>
+                      <td data-label="Ngày" style={{ fontWeight: 600 }}>{row.date}</td>
+                      <td data-label="Doanh thu thuần" className="col-money" style={{ color: 'var(--teal-700)' }}>
                         {formatVND(row.revenue)}
                       </td>
-                      <td className="col-money" style={{ color: 'var(--slate-600)' }}>
+                      <td data-label="Giá vốn (COGS)" className="col-money" style={{ color: 'var(--slate-600)' }}>
                         {formatVND(row.cost)}
                       </td>
                       <td
+                        data-label="Lợi nhuận gộp"
                         className="col-money"
                         style={{
                           fontWeight: 600,
@@ -568,7 +569,7 @@ export const ReportsPage: React.FC = () => {
                       >
                         {formatVND(row.gross_profit)}
                       </td>
-                      <td style={{ fontSize: '12px', color: 'var(--slate-500)' }}>
+                      <td data-label="Ghi chú" style={{ fontSize: '12px', color: 'var(--slate-500)' }}>
                         {row.revenue > 0 ? 'Có phát sinh doanh thu' : 'Không có phát sinh'}
                       </td>
                     </tr>
@@ -583,7 +584,7 @@ export const ReportsPage: React.FC = () => {
       {/* Tab 2: Top sản phẩm bán chạy */}
       {activeTab === 'best_sellers' && (
         <div className="table-card">
-          <div className="table-responsive-wrapper">
+          <div className="table-responsive-wrapper report-table-bestsellers">
             <table className="table-misa" data-testid="best-sellers-table">
               <thead>
                 <tr>
@@ -613,15 +614,15 @@ export const ReportsPage: React.FC = () => {
                 ) : (
                   data.best_sellers.map((item, index) => (
                     <tr key={item.product_id}>
-                      <td className="col-center" style={{ fontWeight: 700, color: index < 3 ? 'var(--teal-600)' : 'var(--slate-500)' }}>
+                      <td data-label="Hạng" className="col-center" style={{ fontWeight: 700, color: index < 3 ? 'var(--teal-600)' : 'var(--slate-500)' }}>
                         #{index + 1}
                       </td>
-                      <td className="col-sku">{item.product_id.slice(0, 8)}…</td>
-                      <td style={{ fontWeight: 600 }}>{item.product_name}</td>
-                      <td className="col-center" style={{ fontWeight: 600 }}>
+                      <td data-label="Mã sản phẩm" className="col-sku">{item.product_id.slice(0, 8)}…</td>
+                      <td data-label="Tên sản phẩm" style={{ fontWeight: 600 }}>{item.product_name}</td>
+                      <td data-label="Số lượng đã bán" className="col-center" style={{ fontWeight: 600 }}>
                         {formatNumber(item.quantity)}
                       </td>
-                      <td className="col-money" style={{ fontWeight: 600, color: 'var(--teal-700)' }}>
+                      <td data-label="Doanh thu mang lại" className="col-money" style={{ fontWeight: 600, color: 'var(--teal-700)' }}>
                         {formatVND(item.revenue)}
                       </td>
                     </tr>
@@ -636,7 +637,7 @@ export const ReportsPage: React.FC = () => {
       {/* Tab 3: Cảnh báo tồn kho */}
       {activeTab === 'low_stock' && (
         <div className="table-card">
-          <div className="table-responsive-wrapper">
+          <div className="table-responsive-wrapper report-table-lowstock">
             <table className="table-misa" data-testid="low-stock-table">
               <thead>
                 <tr>
@@ -669,9 +670,9 @@ export const ReportsPage: React.FC = () => {
                     const isZero = item.stock_quantity <= 0;
                     return (
                       <tr key={item.id}>
-                        <td className="col-sku">{item.sku}</td>
-                        <td style={{ fontWeight: 600 }}>{item.name}</td>
-                        <td>
+                        <td data-label="Mã SKU" className="col-sku">{item.sku}</td>
+                        <td data-label="Tên hàng hóa" style={{ fontWeight: 600 }}>{item.name}</td>
+                        <td data-label="Chủng loại">
                           {item.kind === 'PHONE' ? (
                             <Badge variant="phone">Điện thoại</Badge>
                           ) : (
@@ -679,6 +680,7 @@ export const ReportsPage: React.FC = () => {
                           )}
                         </td>
                         <td
+                          data-label="Tồn kho thực tế"
                           className="col-center"
                           style={{
                             fontWeight: 700,
@@ -687,8 +689,8 @@ export const ReportsPage: React.FC = () => {
                         >
                           {formatNumber(item.stock_quantity)}
                         </td>
-                        <td className="col-center">{formatNumber(item.min_stock)}</td>
-                        <td className="col-center">
+                        <td data-label="Định mức an toàn" className="col-center">{formatNumber(item.min_stock)}</td>
+                        <td data-label="Tình trạng cảnh báo" className="col-center">
                           {isZero ? (
                             <Badge variant="quarantine">Hết hàng (0)</Badge>
                           ) : (
