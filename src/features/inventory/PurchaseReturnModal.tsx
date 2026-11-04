@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Input } from '../../components/ui/Input';
 import { api, ApiClientError } from '../../lib/api-client';
 import { formatVND } from '../../lib/formatters';
 import type { PurchaseDetail, PurchaseReturnInputPayload } from '../../types/inventory';
@@ -298,7 +299,9 @@ export const PurchaseReturnModal: React.FC<PurchaseReturnModalProps> = ({
                           <label htmlFor={`acc-qty-${line.id}`} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--slate-700)' }}>
                             Số lượng trả NCC:
                           </label>
-                          <input
+                          <Input
+                            bare
+                            formatThousands
                             id={`acc-qty-${line.id}`}
                             type="number"
                             min={0}

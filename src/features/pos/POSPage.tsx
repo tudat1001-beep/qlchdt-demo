@@ -792,7 +792,9 @@ export const POSPage: React.FC = () => {
                           >
                             <Minus size={12} />
                           </button>
-                          <input
+                          <Input
+                            bare
+                            formatThousands
                             type="number"
                             min={1}
                             max={item.available_stock}
@@ -870,7 +872,7 @@ export const POSPage: React.FC = () => {
               min={0}
               max={subtotal}
               value={discount === 0 ? '' : discount}
-              onChange={(e) => setDiscount(Math.max(0, parseInt(e.target.value || '0', 10)))}
+              onChange={(e) => setDiscount(Math.min(subtotal, Math.max(0, parseInt(e.target.value || '0', 10))))}
               placeholder="0"
               disabled={mutation.isPending}
             />

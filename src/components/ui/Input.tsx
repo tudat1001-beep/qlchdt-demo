@@ -8,6 +8,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   required?: boolean;
   containerClassName?: string;
   formatThousands?: boolean;
+  bare?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({
@@ -19,6 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   className = '',
   containerClassName = '',
   formatThousands = false,
+  bare = false,
   type = 'text',
   value,
   onChange,
@@ -103,6 +105,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     }
     return String(value);
   };
+
+  if (bare) {
+    return (
+      <input
+        ref={ref}
+        id={inputId}
+        className={className || `input-field ${error ? 'input-error' : ''}`}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        required={required}
+        type={formatThousands ? 'text' : type}
+        inputMode={formatThousands ? (props.inputMode || 'numeric') : props.inputMode}
+        value={getDisplayValue()}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        {...props}
+      />
+    );
+  }
 
   return (
     <div className={`form-group ${containerClassName}`}>

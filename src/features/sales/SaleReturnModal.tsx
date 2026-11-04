@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Input } from '../../components/ui/Input';
 import { api, ApiClientError } from '../../lib/api-client';
 import { formatVND } from '../../lib/formatters';
 import type { SaleDetail, ReturnInputPayload } from '../../types/sales';
@@ -279,7 +280,9 @@ export const SaleReturnModal: React.FC<SaleReturnModalProps> = ({
                           {isFullyReturned ? (
                             <span style={{ fontSize: '11px', color: 'var(--slate-400)' }}>Đã trả hết</span>
                           ) : (
-                            <input
+                            <Input
+                              bare
+                              formatThousands
                               type="number"
                               min={0}
                               max={remaining}

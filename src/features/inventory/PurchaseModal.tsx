@@ -531,7 +531,9 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                           {line.devices.length} máy
                         </div>
                       ) : (
-                        <input
+                        <Input
+                          bare
+                          formatThousands
                           type="number"
                           min={1}
                           data-testid={`accessory-qty-${lineIndex}`}
@@ -663,7 +665,9 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                               style={{ height: 30, fontSize: '12px' }}
                               disabled={mutation.isPending}
                             />
-                            <input
+                            <Input
+                              bare
+                              formatThousands
                               type="number"
                               min={0}
                               value={dev.sale_price}
