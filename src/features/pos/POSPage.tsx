@@ -865,6 +865,7 @@ export const POSPage: React.FC = () => {
             <Input
               id="pos-discount"
               label="Chiết khấu đơn (VND)"
+              formatThousands
               type="number"
               min={0}
               max={subtotal}
@@ -926,6 +927,7 @@ export const POSPage: React.FC = () => {
               <Input
                 id="pos-cash"
                 label="Tiền mặt (VND)"
+                formatThousands
                 type="number"
                 min={0}
                 value={cashAmount === 0 ? '' : cashAmount}
@@ -936,6 +938,7 @@ export const POSPage: React.FC = () => {
               <Input
                 id="pos-bank"
                 label="Chuyển khoản (VND)"
+                formatThousands
                 type="number"
                 min={0}
                 value={bankAmount === 0 ? '' : bankAmount}

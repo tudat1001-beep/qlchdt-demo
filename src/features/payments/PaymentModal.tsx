@@ -172,11 +172,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <div>
           <Input
             label="Số tiền thanh toán (VND) (*)"
+            formatThousands
             type="number"
             min={1}
             max={outstandingDebt}
             value={amount === 0 ? '' : amount}
-            onChange={(e) => setAmount(Math.max(0, parseInt(e.target.value || '0', 10)))}
+            onChange={(e) => setAmount(Math.min(outstandingDebt, Math.max(0, parseInt(e.target.value || '0', 10))))}
             required
             disabled={mutation.isPending}
           />

@@ -262,6 +262,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             label="Giá bán niêm yết (VND)"
             id="product-sale-price"
             name="sale_price"
+            formatThousands
             type="number"
             min="0"
             step="1000"
@@ -275,6 +276,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             label="Cảnh báo tồn tối thiểu"
             id="product-min-stock"
             name="min_stock"
+            formatThousands
             type="number"
             min="0"
             step="1"

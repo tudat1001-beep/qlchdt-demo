@@ -423,6 +423,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
           <Input
             id="purchase-extra-cost"
             label="Chi phí mua hàng phát sinh (VND)"
+            formatThousands
             type="number"
             min={0}
             value={extraCost === 0 ? '' : extraCost}
@@ -492,6 +493,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
                     <Input
                       label="Đơn giá nhập (VND)"
+                      formatThousands
                       type="number"
                       min={0}
                       value={line.unit_cost === 0 ? '' : line.unit_cost}
@@ -742,6 +744,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
               <Input
                 id="purchase-cash"
                 label="Tiền mặt (VND)"
+                formatThousands
                 type="number"
                 min={0}
                 value={cashAmount === 0 ? '' : cashAmount}
@@ -752,6 +755,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
               <Input
                 id="purchase-bank"
                 label="Chuyển khoản (VND)"
+                formatThousands
                 type="number"
                 min={0}
                 value={bankAmount === 0 ? '' : bankAmount}

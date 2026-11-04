@@ -1,4 +1,5 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
+import { formatNumber } from '../../lib/formatters';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -6,6 +7,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   helperText?: string;
   required?: boolean;
   containerClassName?: string;
+  formatThousands?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({
@@ -16,9 +18,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   id,
   className = '',
   containerClassName = '',
+  formatThousands = false,
+  type = 'text',
+  value,
+  onChange,
+  onFocus,
+  onBlur,
   onKeyDown,
   ...props
 }, ref) => {
+  const [isFocused, setIsFocused] = useState(false);
   const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -44,6 +53,57 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (formatThousands) {
+      const raw = e.target.value.replace(/\D/g, '');
+      e.target.value = raw;
+      if (onChange) {
+        onChange(e);
+      }
+      return;
+    }
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (formatThousands) {
+      setIsFocused(true);
+    }
+    if (onFocus) {
+      onFocus(e);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (formatThousands) {
+      setIsFocused(false);
+    }
+    if (onBlur) {
+      onBlur(e);
+    }
+  };
+
+  const getDisplayValue = () => {
+    if (!formatThousands) {
+      return value;
+    }
+    if (value === undefined) {
+      return undefined;
+    }
+    if (isFocused) {
+      return value === null ? '' : String(value);
+    }
+    if (value === '' || value === null) {
+      return '';
+    }
+    if (typeof value === 'number' || typeof value === 'string') {
+      return formatNumber(value);
+    }
+    return String(value);
+  };
+
   return (
     <div className={`form-group ${containerClassName}`}>
       {label && (
@@ -59,6 +119,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
         required={required}
+        type={formatThousands ? 'text' : type}
+        inputMode={formatThousands ? (props.inputMode || 'numeric') : props.inputMode}
+        value={getDisplayValue()}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         {...props}
       />
